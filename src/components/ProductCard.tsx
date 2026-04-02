@@ -1,0 +1,86 @@
+import { Heart, ShoppingCart } from 'lucide-react';
+import Link from 'next/link';
+import { useStore } from '@/store/useStore';
+import { Product } from '@/data/mockData';
+import { toast } from '@/hooks/use-toast';
+
+interface ProductCardProps {
+  product: Product;
+}
+
+const ProductCard = ({ product }: ProductCardProps) => {
+  const { addToCart, toggleWishlist, wishlist } = useStore();
+  const isWished = wishlist.includes(product.id);
+  const discount = product.salePercent || Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      image: product.images[0],
+      price: product.price,
+      color: product.colors[0],
+      quantity: 1,
+    });
+    toast({ title: 'Added to cart', description: product.name });
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product.id);
+    toast({ title: isWished ? 'Removed from wishlist' : 'Added to wishlist', description: product.name });
+  };
+
+  return (
+    <Link href={`/product/${product.slug}`} className="group block">
+      <div className="bg-card rounded-xl overflow-hidden card-hover border border-border">
+        <div className="relative aspect-[3/4] overflow-hidden">
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+          {/* Sale badge */}
+          {discount > 0 && product.isSale && (
+            <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-md">
+              {discount}% OFF
+            </span>
+          )}
+          {!product.isSale && discount > 0 && (
+            <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-md">
+              -{discount}%
+            </span>
+          )}
+          {product.isNew && (
+            <span className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
+              NEW
+            </span>
+          )}
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+            <button onClick={handleAddToCart} className="bg-card text-foreground p-3 rounded-full hover:bg-primary hover:text-primary-foreground transition-colors" title="Add to Cart">
+              <ShoppingCart className="h-5 w-5" />
+            </button>
+            <button onClick={handleToggleWishlist} className={`p-3 rounded-full transition-colors ${isWished ? 'bg-destructive text-destructive-foreground' : 'bg-card text-foreground hover:bg-destructive hover:text-destructive-foreground'}`} title="Wishlist">
+              <Heart className="h-5 w-5" fill={isWished ? 'currentColor' : 'none'} />
+            </button>
+          </div>
+        </div>
+        <div className="p-4">
+          <h3 className="font-medium text-foreground text-sm truncate">{product.name}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-primary font-bold">₹{product.price.toLocaleString()}</span>
+            {product.comparePrice > product.price && (
+              <span className="text-muted-foreground text-sm line-through">₹{product.comparePrice.toLocaleString()}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+export default ProductCard;
