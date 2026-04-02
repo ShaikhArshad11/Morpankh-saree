@@ -74,6 +74,8 @@ const Navbar = () => {
                         <p className="text-sm font-medium">{userName}</p>
                         <p className="text-xs text-muted-foreground">{isAdmin ? 'Admin' : 'Customer'}</p>
                       </div>
+                      <Link href="/profile" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm hover:bg-muted transition-colors">My Profile</Link>
+                      <Link href="/orders" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm hover:bg-muted transition-colors">My Orders</Link>
                       {isAdmin && (
                         <Link href="/admin" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm hover:bg-muted transition-colors">Admin Panel</Link>
                       )}
