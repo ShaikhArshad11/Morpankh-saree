@@ -13,8 +13,12 @@ const AdminLogin = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@morpankh.com' && password === 'admin123') {
-      login('Admin', true);
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      login(
+        { id: 'admin', name: 'Admin', email: process.env.ADMIN_EMAIL!, verified: true },
+        'admin-token',
+        true
+      );
       toast({ title: 'Welcome, Admin!' });
       router.push('/admin');
     } else {

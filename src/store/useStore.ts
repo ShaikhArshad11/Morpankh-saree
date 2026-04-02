@@ -23,6 +23,13 @@ interface StoreState {
   isLoggedIn: boolean;
   isAdmin: boolean;
   userName: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    verified: boolean;
+  } | null;
+  token: string | null;
 
   // Product actions
   addProduct: (product: Product) => void;
@@ -56,7 +63,7 @@ interface StoreState {
   deleteReview: (id: string) => void;
 
   // Auth
-  login: (name: string, isAdmin?: boolean) => void;
+  login: (user: { id: string; name: string; email: string; verified: boolean }, token: string, isAdmin?: boolean) => void;
   logout: () => void;
 }
 
@@ -73,6 +80,8 @@ export const useStore = create<StoreState>()(
       isLoggedIn: false,
       isAdmin: false,
       userName: '',
+      user: null,
+      token: null,
 
       addProduct: (product) => set((s) => ({ products: [...s.products, product] })),
       updateProduct: (id, updates) => set((s) => ({
@@ -124,8 +133,23 @@ export const useStore = create<StoreState>()(
       })),
       deleteReview: (id) => set((s) => ({ reviews: s.reviews.filter((r) => r.id !== id) })),
 
-      login: (name, isAdmin = false) => set({ isLoggedIn: true, userName: name, isAdmin }),
-      logout: () => set({ isLoggedIn: false, userName: '', isAdmin: false }),
+      login: (user, token, isAdmin = false) => set({
+        isLoggedIn: true,
+        userName: user.name,
+        user,
+        token,
+        isAdmin
+      }),
+      logout: () => {
+        localStorage.removeItem('token');
+        set({
+          isLoggedIn: false,
+          userName: '',
+          user: null,
+          token: null,
+          isAdmin: false
+        });
+      },
     }),
     { name: 'morpankh-store' }
   )

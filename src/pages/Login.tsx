@@ -13,7 +13,11 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email.split('@')[0] || 'User');
+    // Mock login for now - in production, this should call an API
+    login(
+      { id: 'mock-user', name: email.split('@')[0] || 'User', email, verified: true },
+      'mock-token'
+    );
     toast({ title: 'Logged in successfully!' });
     router.push('/');
   };
