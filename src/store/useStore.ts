@@ -71,6 +71,8 @@ interface StoreState {
   // Auth
   login: (user: { id: string; name: string; email: string; verified: boolean }, token: string, isAdmin?: boolean) => void;
   logout: () => void;
+  initializeAuth: () => void;
+  checkTokenValidity: () => boolean;
 }
 
 export const useStore = create<StoreState>()(
@@ -187,11 +189,18 @@ export const useStore = create<StoreState>()(
       deleteReview: (id) => set((s) => ({ reviews: s.reviews.filter((r) => r.id !== id) })),
 
       login: (user, token, isAdmin = false) => {
+
+        const loginTime = Date.now();
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('loginTime', loginTime.toString());
+        localStorage.setItem('isAdmin', isAdmin.toString());
+
         set({
           isLoggedIn: true,
           userName: user.name,
           user,
           token,
+
           isAdmin,
         });
 
@@ -200,6 +209,9 @@ export const useStore = create<StoreState>()(
         }
       },
       logout: () => {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('loginTime');
+        localStorage.removeItem('isAdmin');
         localStorage.removeItem('token');
         set({
           isLoggedIn: false,
@@ -209,6 +221,49 @@ export const useStore = create<StoreState>()(
           isAdmin: false,
           wishlist: [],
         });
+      },
+      initializeAuth: () => {
+        const token = localStorage.getItem('adminToken');
+        const loginTime = localStorage.getItem('loginTime');
+        const isAdmin = localStorage.getItem('isAdmin') === 'true';
+        
+        if (token && loginTime) {
+          const loginTimestamp = parseInt(loginTime);
+          const currentTime = Date.now();
+          const twentyFourHours = 24 * 60 * 60 * 1000;
+          
+          if ((currentTime - loginTimestamp) < twentyFourHours) {
+            // Restore admin session
+            set({
+              isLoggedIn: true,
+              userName: 'Admin',
+              user: {
+                id: 'admin',
+                name: 'Admin',
+                email: 'admin@morpankh.com',
+                verified: true
+              },
+              token,
+              isAdmin
+            });
+          } else {
+            // Token expired, clean up
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('loginTime');
+            localStorage.removeItem('isAdmin');
+            localStorage.removeItem('token');
+          }
+        }
+      },
+      checkTokenValidity: () => {
+        const loginTime = localStorage.getItem('loginTime');
+        if (!loginTime) return false;
+        
+        const currentTime = Date.now();
+        const loginTimestamp = parseInt(loginTime);
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        
+        return (currentTime - loginTimestamp) < twentyFourHours;
       },
     }),
     {

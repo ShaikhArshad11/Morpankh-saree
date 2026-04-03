@@ -1,7 +1,6 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare, Mail } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
@@ -23,8 +22,23 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const { logout, userName, isAdmin, isLoggedIn } = useStore();
   const reviews = useStore((s) => s.reviews);
   const pendingReviews = reviews.filter((r) => !r.approved).length;
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Wait for auth to initialize
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialized(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Protect admin routes
+  if (!isInitialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
+
   if (!isLoggedIn || !isAdmin) {
     return <RedirectToAdminLogin />;
   }
@@ -32,7 +46,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   function RedirectToAdminLogin() {
     useEffect(() => {
       router.replace('/admin/login');
-    }, [router]);
+    }, []);
     return null;
   }
 
