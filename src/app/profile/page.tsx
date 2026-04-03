@@ -40,6 +40,7 @@ const ProfilePage = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof UserProfile, string>>>({});
   
   // Initialize profile data from logged-in user
   const [profileData, setProfileData] = useState<UserProfile>(() => ({
@@ -101,6 +102,56 @@ const ProfilePage = () => {
     e.preventDefault();
     setIsLoading(true);
     setSaveMessage('');
+
+    const normalizeOptionalString = (value: unknown) => {
+      const s = String(value ?? '').trim();
+      return s.length > 0 ? s : '';
+    };
+
+    const digitsOnly = (value: unknown) => normalizeOptionalString(value).replace(/\D/g, '');
+
+    const validateProfile = () => {
+      const errors: Partial<Record<keyof UserProfile, string>> = {};
+
+      const mobileDigits = digitsOnly(profileData.mobile);
+      const altDigits = digitsOnly(profileData.alternateMobile);
+      const pincodeDigits = digitsOnly(profileData.pincode);
+      const address = normalizeOptionalString(profileData.address);
+      const city = normalizeOptionalString(profileData.city);
+
+      if (mobileDigits && mobileDigits.length !== 10) {
+        errors.mobile = 'Mobile Number must be exactly 10 digits';
+      }
+      if (altDigits && altDigits.length !== 10) {
+        errors.alternateMobile = 'Alternate Mobile must be exactly 10 digits';
+      }
+      if (mobileDigits && altDigits && mobileDigits === altDigits) {
+        errors.alternateMobile = 'Alternate Mobile must be different from Mobile Number';
+      }
+
+      if (address && (address.length < 5 || address.length > 250)) {
+        errors.address = 'Address must be between 5 and 250 characters';
+      }
+
+      if (city && (city.length < 2 || city.length > 60 || !/^[a-zA-Z\s.\-']+$/.test(city))) {
+        errors.city = 'City must be 2-60 characters and contain only letters';
+      }
+
+      if (pincodeDigits && pincodeDigits.length !== 6) {
+        errors.pincode = 'Pincode must be exactly 6 digits';
+      }
+
+      return errors;
+    };
+
+    const errors = validateProfile();
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setSaveMessage('Please fix the highlighted fields before saving.');
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Get token from store or localStorage
@@ -146,6 +197,9 @@ const ProfilePage = () => {
 
   const handleInputChange = (field: keyof UserProfile, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
   if (!isLoggedIn || !user) {
@@ -298,20 +352,34 @@ const ProfilePage = () => {
                                 <Input
                                   id="mobile"
                                   type="tel"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  maxLength={10}
+                                  placeholder="10-digit mobile number"
                                   value={profileData.mobile}
                                   onChange={(e) => handleInputChange('mobile', e.target.value)}
                                   className="mt-1"
                                 />
+                                {fieldErrors.mobile && (
+                                  <p className="mt-1 text-xs text-destructive">{fieldErrors.mobile}</p>
+                                )}
                               </div>
                               <div>
                                 <Label htmlFor="alternateMobile">Alternate Mobile</Label>
                                 <Input
                                   id="alternateMobile"
                                   type="tel"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  maxLength={10}
+                                  placeholder="10-digit alternate number"
                                   value={profileData.alternateMobile}
                                   onChange={(e) => handleInputChange('alternateMobile', e.target.value)}
                                   className="mt-1"
                                 />
+                                {fieldErrors.alternateMobile && (
+                                  <p className="mt-1 text-xs text-destructive">{fieldErrors.alternateMobile}</p>
+                                )}
                               </div>
                               <div>
                                 <Label htmlFor="address">Address</Label>
@@ -322,6 +390,9 @@ const ProfilePage = () => {
                                   className="mt-1"
                                   rows={3}
                                 />
+                                {fieldErrors.address && (
+                                  <p className="mt-1 text-xs text-destructive">{fieldErrors.address}</p>
+                                )}
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -332,15 +403,25 @@ const ProfilePage = () => {
                                     onChange={(e) => handleInputChange('city', e.target.value)}
                                     className="mt-1"
                                   />
+                                  {fieldErrors.city && (
+                                    <p className="mt-1 text-xs text-destructive">{fieldErrors.city}</p>
+                                  )}
                                 </div>
                                 <div>
                                   <Label htmlFor="pincode">Pincode</Label>
                                   <Input
                                     id="pincode"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={6}
+                                    placeholder="6-digit pincode"
                                     value={profileData.pincode}
                                     onChange={(e) => handleInputChange('pincode', e.target.value)}
                                     className="mt-1"
                                   />
+                                  {fieldErrors.pincode && (
+                                    <p className="mt-1 text-xs text-destructive">{fieldErrors.pincode}</p>
+                                  )}
                                 </div>
                               </div>
                             </TabsContent>

@@ -1,5 +1,7 @@
 import { Heart, ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { Product } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
@@ -12,6 +14,40 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, toggleWishlist, wishlist } = useStore();
   const isWished = wishlist.includes(product.id);
   const discount = product.salePercent || Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100);
+
+  const [imageSrc, setImageSrc] = useState(product.images[0] || '/placeholder.svg');
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  useEffect(() => {
+    setImageSrc(product.images[0] || '/placeholder.svg');
+    setImgLoaded(false);
+  }, [product.id, product.images]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setIsNearViewport(true);
+          obs.disconnect();
+        }
+      },
+      { root: null, rootMargin: '300px', threshold: 0.01 }
+    );
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -36,13 +72,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Link href={`/product/${product.slug}`} className="group block">
-      <div className="bg-card rounded-xl overflow-hidden card-hover border border-border">
+      <div ref={containerRef} className="bg-card rounded-xl overflow-hidden card-hover border border-border">
         <div className="relative aspect-[3/4] overflow-hidden">
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          {!imgLoaded && (
+            <div className="absolute inset-0 bg-muted animate-pulse" />
+          )}
+          {isNearViewport && (
+            <Image
+              src={imageSrc}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
+              quality={60}
+              onLoadingComplete={() => setImgLoaded(true)}
+              onError={() => {
+                setImageSrc('/placeholder.svg');
+              }}
+              className={`object-cover transition-transform duration-500 group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            />
+          )}
           {/* Sale badge */}
           {discount > 0 && product.isSale && (
             <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-md">

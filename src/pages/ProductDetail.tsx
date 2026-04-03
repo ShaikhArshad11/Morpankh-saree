@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Heart, ShoppingCart, Minus, Plus } from 'lucide-react';
+import Image from 'next/image';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
@@ -16,6 +17,8 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [mainImageSrc, setMainImageSrc] = useState(product?.images?.[0] || '/placeholder.svg');
+  const [thumbErrors, setThumbErrors] = useState<Record<number, boolean>>({});
 
   if (!product) return (
     <PublicLayout>
@@ -28,6 +31,11 @@ const ProductDetail = () => {
   const isWished = wishlist.includes(product.id);
   const discount = Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100);
   const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+
+  useEffect(() => {
+    const nextSrc = product.images?.[selectedImage] || '/placeholder.svg';
+    setMainImageSrc(nextSrc);
+  }, [product.images, selectedImage]);
 
   const handleAddToCart = () => {
     addToCart({ productId: product.id, name: product.name, image: product.images[0], price: product.price, color: selectedColor, size: selectedSize, quantity });
@@ -46,12 +54,33 @@ const ProductDetail = () => {
           {/* Images */}
           <div>
             <div className="aspect-[3/4] rounded-xl overflow-hidden mb-4">
-              <img src={product.images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+              <div className="relative w-full h-full">
+                <Image
+                  src={mainImageSrc}
+                  alt={product.name}
+                  fill
+                  priority
+                  quality={75}
+                  onError={() => setMainImageSrc('/placeholder.svg')}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 520px"
+                  className="object-cover"
+                />
+              </div>
             </div>
             <div className="flex gap-3">
               {product.images.map((img, i) => (
                 <button key={i} onClick={() => setSelectedImage(i)} className={`w-20 h-24 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === i ? 'border-primary' : 'border-border'}`}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={thumbErrors[i] ? '/placeholder.svg' : img}
+                      alt=""
+                      fill
+                      quality={60}
+                      onError={() => setThumbErrors((prev) => ({ ...prev, [i]: true }))}
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </div>
                 </button>
               ))}
             </div>

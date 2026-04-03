@@ -83,7 +83,7 @@ const sareeImages = [
   'https://images.unsplash.com/photo-1594463750939-ebb28c3f7f75?w=600&h=800&fit=crop',
   'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=600&h=800&fit=crop',
   'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=600&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d44?w=600&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d44?w=600&h=800&fit=crop&auto=format',
   'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=800&fit=crop',
   'https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?w=600&h=800&fit=crop',
 ];

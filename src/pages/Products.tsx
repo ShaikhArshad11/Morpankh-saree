@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal, X, Search } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
 import { Slider } from '@/components/ui/slider';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const highlightFilters = [
   { label: 'Best Seller', key: 'featured' },
@@ -24,6 +33,7 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000]);
+  const [page, setPage] = useState(1);
 
   const maxPrice = 20000;
 
@@ -52,9 +62,50 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
     setSearchQuery('');
     setPriceRange([0, maxPrice]);
     setSortBy('');
+    setPage(1);
   };
 
   const hasActiveFilters = selectedCategory || selectedHighlight || searchQuery || priceRange[0] > 0 || priceRange[1] < maxPrice;
+
+  const pageSize = 12;
+  const totalProducts = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalProducts / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory, selectedHighlight, sortBy, searchQuery, priceRange]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const startIndex = totalProducts === 0 ? 0 : (page - 1) * pageSize;
+  const endIndexExclusive = Math.min(startIndex + pageSize, totalProducts);
+  const pagedProducts = filtered.slice(startIndex, endIndexExclusive);
+
+  const handleSetPage = (nextPage: number) => {
+    const clamped = Math.min(totalPages, Math.max(1, nextPage));
+    setPage(clamped);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getPageItems = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+
+    const items: Array<number | 'ellipsis'> = [1];
+
+    const left = Math.max(2, page - 1);
+    const right = Math.min(totalPages - 1, page + 1);
+
+    if (left > 2) items.push('ellipsis');
+    for (let p = left; p <= right; p++) items.push(p);
+    if (right < totalPages - 1) items.push('ellipsis');
+
+    items.push(totalPages);
+    return items;
+  };
 
   return (
     <PublicLayout>
@@ -164,9 +215,66 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
         {filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">No products found matching your filters.</div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {filtered.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {pagedProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+
+            <div className="mt-10 flex flex-col items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} - {endIndexExclusive} of {totalProducts} products
+              </div>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (page > 1) handleSetPage(page - 1);
+                        }}
+                        aria-disabled={page <= 1}
+                        className={page <= 1 ? 'pointer-events-none opacity-50' : undefined}
+                      />
+                    </PaginationItem>
+
+                    {getPageItems().map((it, idx) => (
+                      <PaginationItem key={`${it}-${idx}`}>
+                        {it === 'ellipsis' ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            href="#"
+                            isActive={it === page}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSetPage(it);
+                            }}
+                          >
+                            {it}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (page < totalPages) handleSetPage(page + 1);
+                        }}
+                        aria-disabled={page >= totalPages}
+                        className={page >= totalPages ? 'pointer-events-none opacity-50' : undefined}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </div>
+          </>
         )}
       </div>
     </PublicLayout>

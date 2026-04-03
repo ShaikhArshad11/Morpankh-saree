@@ -18,6 +18,26 @@ interface User {
   createdAt: Date;
 }
 
+function normalizeOptionalString(value: unknown): string | undefined {
+  const s = String(value ?? '').trim();
+  return s.length > 0 ? s : undefined;
+}
+
+function normalizePhone(value: unknown): string | undefined {
+  const raw = normalizeOptionalString(value);
+  if (!raw) return undefined;
+  const digits = raw.replace(/\D/g, '');
+  return digits.length > 0 ? digits : undefined;
+}
+
+function isValidPhone(digits: string): boolean {
+  return /^\d{10}$/.test(digits);
+}
+
+function isValidPincode(digits: string): boolean {
+  return /^\d{6}$/.test(digits);
+}
+
 // Simple JWT verification (since jsonwebtoken might not be available)
 function verifyToken(token: string): { id: string } | null {
   try {
@@ -108,6 +128,34 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
     }
 
+    const mobileDigits = normalizePhone(updates.mobile);
+    const altMobileDigits = normalizePhone(updates.alternateMobile);
+    const address = normalizeOptionalString(updates.address);
+    const city = normalizeOptionalString(updates.city);
+    const pincodeDigits = normalizePhone(updates.pincode);
+
+    if (mobileDigits && !isValidPhone(mobileDigits)) {
+      return NextResponse.json({ error: 'Mobile Number must be exactly 10 digits' }, { status: 400 });
+    }
+    if (altMobileDigits && !isValidPhone(altMobileDigits)) {
+      return NextResponse.json({ error: 'Alternate Mobile must be exactly 10 digits' }, { status: 400 });
+    }
+    if (mobileDigits && altMobileDigits && mobileDigits === altMobileDigits) {
+      return NextResponse.json({ error: 'Alternate Mobile must be different from Mobile Number' }, { status: 400 });
+    }
+
+    if (address && (address.length < 5 || address.length > 250)) {
+      return NextResponse.json({ error: 'Address must be between 5 and 250 characters' }, { status: 400 });
+    }
+
+    if (city && (city.length < 2 || city.length > 60 || !/^[a-zA-Z\s.\-']+$/.test(city))) {
+      return NextResponse.json({ error: 'City must be 2-60 characters and contain only letters' }, { status: 400 });
+    }
+
+    if (pincodeDigits && !isValidPincode(pincodeDigits)) {
+      return NextResponse.json({ error: 'Pincode must be exactly 6 digits' }, { status: 400 });
+    }
+
     await client.connect();
     const db = client.db('morepankh_db');
     const users = db.collection<User>('users');
@@ -125,11 +173,11 @@ export async function PUT(request: NextRequest) {
     const updateData: Partial<User> = {
       name: updates.name,
       email: updates.email,
-      mobile: updates.mobile,
-      alternateMobile: updates.alternateMobile,
-      address: updates.address,
-      city: updates.city,
-      pincode: updates.pincode,
+      mobile: mobileDigits,
+      alternateMobile: altMobileDigits,
+      address,
+      city,
+      pincode: pincodeDigits,
     };
 
     console.log('Updating user with ID:', decoded.id);
