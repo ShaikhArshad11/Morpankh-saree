@@ -6,12 +6,18 @@ import nodemailer from 'nodemailer';
 const uri = process.env.MONGODB_URI!;
 
 interface User {
+  id: string;
   name: string;
   email: string;
   password: string;
   otp?: string;
   otpExpiry?: Date;
   verified: boolean;
+  mobile?: string;
+  alternateMobile?: string;
+  address?: string;
+  city?: string;
+  pincode?: string;
   createdAt: Date;
 }
 
@@ -110,7 +116,9 @@ export async function POST(request: NextRequest) {
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Create user in database
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const user: User = {
+      id: userId,
       name,
       email,
       password: hashedPassword,
@@ -121,7 +129,7 @@ export async function POST(request: NextRequest) {
     };
 
     const result = await users.insertOne(user);
-    console.log(`✓ User created with ID: ${result.insertedId}`);
+    console.log(` User created with ID: ${result.insertedId}`);
 
     // Send OTP email
     try {

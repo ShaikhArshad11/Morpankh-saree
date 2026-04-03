@@ -28,6 +28,11 @@ interface StoreState {
     name: string;
     email: string;
     verified: boolean;
+    mobile?: string;
+    alternateMobile?: string;
+    address?: string;
+    city?: string;
+    pincode?: string;
   } | null;
   token: string | null;
 
