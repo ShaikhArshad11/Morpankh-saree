@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 
+export const runtime = 'nodejs';
+
 interface WishlistDoc {
   userId: string;
   productIds: string[];
@@ -24,15 +26,32 @@ function getBearerToken(request: NextRequest): string | null {
   return raw;
 }
 
+function decodeBase64Json(b64: string): unknown {
+  const normalized = b64.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+
+  // Prefer Buffer when available (nodejs runtime), otherwise fallback to atob.
+  const jsonStr =
+    typeof Buffer !== 'undefined'
+      ? Buffer.from(padded, 'base64').toString('utf8')
+      : atob(padded);
+
+  return JSON.parse(jsonStr) as unknown;
+}
+
 function verifyToken(token: string): { id: string } | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    const payload = decodeBase64Json(parts[1]);
+    if (!payload || typeof payload !== 'object') return null;
+    const p = payload as Record<string, unknown>;
 
-    const userId = payload.id ?? payload.userId;
+    const exp = typeof p.exp === 'number' ? p.exp : undefined;
+    if (exp && exp < Date.now() / 1000) return null;
+
+    const userId = (p.id ?? p.userId) as unknown;
     if (!userId) return null;
     return { id: String(userId) };
   } catch {
@@ -67,7 +86,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ wishlist: doc?.productIds || [] });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('Wishlist GET failed', { userId: decoded.id, error: msg });
+    return NextResponse.json({ error: msg, hint: 'Wishlist read failed', where: 'GET /api/wishlist' }, { status: 500 });
   } finally {
     await client.close();
   }
@@ -89,8 +109,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const productId = String(body?.productId || '').trim();
+  let body: unknown = {};
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
+
+  const productId =
+    body && typeof body === 'object' && 'productId' in body
+      ? String((body as Record<string, unknown>).productId || '').trim()
+      : '';
   if (!productId) {
     return NextResponse.json({ error: 'productId is required' }, { status: 400 });
   }
@@ -105,7 +134,7 @@ export async function POST(request: NextRequest) {
     await wishlists.updateOne(
       { userId: decoded.id },
       {
-        $setOnInsert: { userId: decoded.id, createdAt: now, productIds: [] },
+        $setOnInsert: { userId: decoded.id, createdAt: now },
         $addToSet: { productIds: productId },
         $set: { updatedAt: now },
       },
@@ -116,7 +145,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ wishlist: updated?.productIds || [] });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('Wishlist POST failed', { userId: decoded.id, productId, error: msg });
+    return NextResponse.json(
+      {
+        error: msg,
+        hint: 'Wishlist write failed',
+        where: 'POST /api/wishlist',
+      },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }
@@ -163,7 +200,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ wishlist: updated?.productIds || [] });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('Wishlist DELETE failed', { userId: decoded.id, productId, error: msg });
+    return NextResponse.json({ error: msg, hint: 'Wishlist delete failed', where: 'DELETE /api/wishlist' }, { status: 500 });
   } finally {
     await client.close();
   }

@@ -131,7 +131,7 @@ const AdminReviews = () => {
                         <Star key={i} className={`h-3 w-3 ${i < r.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
                       ))}
                     </div>
-                    <span className="text-xs text-muted-foreground">{r.date}</span>
+                    <span className="text-xs text-muted-foreground">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">{r.comment}</p>
                 </div>

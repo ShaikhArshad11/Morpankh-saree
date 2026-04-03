@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { MongoClient, Filter, WithId } from 'mongodb';
 
 interface ReviewDoc {
   name: string;
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const db = client.db('morepankh_db');
     const reviews = db.collection<ReviewDoc>('reviews');
 
-    const query: any = {};
+    const query: Filter<ReviewDoc> = {};
     if (approved !== undefined) query.approved = approved;
 
     const reviewsRaw = await reviews
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       .limit(200)
       .toArray();
 
-    const items = reviewsRaw.map((r: any) => ({
+    const items = (reviewsRaw as WithId<ReviewDoc>[]).map((r) => ({
       ...r,
       _id: String(r._id),
       createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,

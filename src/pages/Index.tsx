@@ -6,6 +6,15 @@ import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
 
+type ApprovedReviewItem = {
+  _id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  avatar: string;
+  createdAt: string | null;
+};
+
 const Index = () => {
   const products = useStore((s) => s.products);
   const categories = useStore((s) => s.categories);
@@ -14,7 +23,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
-  const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
+  const [approvedReviews, setApprovedReviews] = useState<ApprovedReviewItem[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);
 
@@ -218,7 +227,7 @@ const Index = () => {
             ) : approvedReviews.length === 0 ? (
               <div className="col-span-full text-center text-sm text-muted-foreground">No reviews yet.</div>
             ) : (
-              approvedReviews.map((review: any) => (
+              approvedReviews.map((review) => (
                 <div key={review._id} className="bg-card rounded-xl p-6 card-hover border border-border">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">{review.avatar}</div>

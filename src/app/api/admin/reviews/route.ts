@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { MongoClient, WithId } from 'mongodb';
 
 interface ReviewDoc {
   name: string;
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       .limit(500)
       .toArray();
 
-    const items = reviewsRaw.map((r: any) => ({
+    const items = (reviewsRaw as WithId<ReviewDoc>[]).map((r) => ({
       ...r,
       _id: String(r._id),
       createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,
