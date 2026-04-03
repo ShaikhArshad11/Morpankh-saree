@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { MongoClient, WithId, Document } from 'mongodb';
 
 interface ContactMessage {
   name: string;
@@ -67,9 +67,11 @@ export async function GET(request: NextRequest) {
       .limit(200)
       .toArray();
 
-    const messages = messagesRaw.map((m: any) => ({
-      ...m,
+    const messages = messagesRaw.map((m: WithId<Document>) => ({
       _id: String(m._id),
+      name: m.name as string,
+      email: m.email as string,
+      message: m.message as string,
       createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : null,
     }));
 

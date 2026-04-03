@@ -7,11 +7,11 @@ import { toast } from '@/hooks/use-toast';
 
 type ProductForm = {
   name: string;
-  price: string;
-  comparePrice: string;
+  originalPrice: string;
+  salePrice: string;
   category: string;
   stock: string;
-  colors: string;
+  colors: string[];
   description: string;
   fabric: string;
   salePercent: string;
@@ -25,26 +25,44 @@ const AdminProducts = () => {
   const [editing, setEditing] = useState<Product | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>({
-    name: '', price: '', comparePrice: '', category: '', stock: '', colors: '',
+    name: '', originalPrice: '', salePrice: '', category: '', stock: '', colors: [],
     description: '', fabric: '', salePercent: '', hidden: false, imageUrl: '',
   });
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ name: '', price: '', comparePrice: '', category: categories[0]?.slug || '', stock: '', colors: '', description: '', fabric: '', salePercent: '', hidden: false, imageUrl: '' });
+    setForm({ name: '', originalPrice: '', salePrice: '', category: categories[0]?.slug || '', stock: '', colors: [], description: '', fabric: '', salePercent: '', hidden: false, imageUrl: '' });
     setModalOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
     setForm({
-      name: p.name, price: p.price.toString(), comparePrice: p.comparePrice.toString(),
-      category: p.category, stock: p.stock.toString(), colors: p.colors.join(', '),
-      description: p.description, fabric: p.fabric,
-      salePercent: p.salePercent?.toString() || '', hidden: p.hidden || false,
+      name: p.name, 
+      originalPrice: p.comparePrice.toString(), 
+      salePrice: p.price.toString(),
+      category: p.category, 
+      stock: p.stock.toString(), 
+      colors: p.colors,
+      description: p.description, 
+      fabric: p.fabric,
+      salePercent: p.salePercent?.toString() || '', 
+      hidden: p.hidden || false,
       imageUrl: p.images[0] || '',
     });
     setModalOpen(true);
+  };
+
+  // Color management functions
+  const addColor = () => {
+    const newColor = prompt('Enter color name:');
+    if (newColor && newColor.trim()) {
+      setForm({ ...form, colors: [...form.colors, newColor.trim()] });
+    }
+  };
+
+  const removeColor = (index: number) => {
+    setForm({ ...form, colors: form.colors.filter((_, i) => i !== index) });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,10 +80,19 @@ const AdminProducts = () => {
     const salePercent = form.salePercent ? Number(form.salePercent) : undefined;
     const images = form.imageUrl ? [form.imageUrl] : (editing ? editing.images : ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&h=800&fit=crop']);
     const data: Partial<Product> = {
-      name: form.name, slug, price: Number(form.price), comparePrice: Number(form.comparePrice),
-      category: form.category, stock: Number(form.stock), colors: form.colors.split(',').map((c) => c.trim()),
-      description: form.description, fabric: form.fabric, hidden: form.hidden, salePercent,
-      isSale: salePercent ? salePercent > 0 : undefined, images,
+      name: form.name, 
+      slug, 
+      price: Number(form.salePrice), 
+      comparePrice: Number(form.originalPrice),
+      category: form.category, 
+      stock: Number(form.stock), 
+      colors: form.colors,
+      description: form.description, 
+      fabric: form.fabric, 
+      hidden: form.hidden, 
+      salePercent,
+      isSale: salePercent ? salePercent > 0 : undefined, 
+      images,
     };
     if (editing) {
       updateProduct(editing.id, data);
@@ -165,14 +192,71 @@ const AdminProducts = () => {
                 <input type="text" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="Or paste image URL" className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring mt-2" />
               </div>
 
+              {/* Price Fields */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Original Price (₹)</label>
+                  <input
+                    type="number"
+                    value={form.originalPrice}
+                    onChange={(e) => setForm({ ...form, originalPrice: e.target.value })}
+                    className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="4000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Sale Price (₹)</label>
+                  <input
+                    type="number"
+                    value={form.salePrice}
+                    onChange={(e) => setForm({ ...form, salePrice: e.target.value })}
+                    className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="1999"
+                  />
+                </div>
+              </div>
+
+              {/* Colors Management */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Colors</label>
+                <div className="space-y-2">
+                  {form.colors.map((color, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm">{color}</span>
+                      <button
+                        onClick={() => removeColor(index)}
+                        className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={addColor}
+                    className="w-full px-3 py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+              </div>
+
+              {/* Product Name */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Name</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Enter product name"
+                />
+              </div>
+
+              {/* Other Fields */}
               {(
                 [
-                  { label: 'Product Name', key: 'name', type: 'text' },
-                  { label: 'Price', key: 'price', type: 'number' },
-                  { label: 'Compare Price', key: 'comparePrice', type: 'number' },
                   { label: 'Sale % (e.g. 35)', key: 'salePercent', type: 'number' },
                   { label: 'Stock Quantity', key: 'stock', type: 'number' },
-                  { label: 'Colors (comma-separated)', key: 'colors', type: 'text' },
                   { label: 'Fabric', key: 'fabric', type: 'text' },
                 ] as const
               ).map((field) => (

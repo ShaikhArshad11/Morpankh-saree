@@ -57,7 +57,6 @@ const AdminLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('token', data.token);
         login(data.user, data.token, true);
         toast({ title: 'Welcome, Admin!' });
         router.push('/admin');
