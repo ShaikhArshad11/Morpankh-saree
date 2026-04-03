@@ -1,9 +1,46 @@
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PublicLayout from '@/components/PublicLayout';
-import { useStore } from '@/store/useStore';
+import { Category } from '@/data/mockData';
+import { Loader2 } from 'lucide-react';
 
 const Categories = () => {
-  const categories = useStore((s) => s.categories);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories');
+      const result = await response.json();
+      
+      if (result.success) {
+        setCategories(result.data);
+      } else {
+        console.error('Failed to fetch categories:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <div className="container mx-auto px-4 py-8">
