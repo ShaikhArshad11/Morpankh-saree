@@ -1,22 +1,63 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, X, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Pencil, Trash2, X, Upload, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
-import { useStore } from '@/store/useStore';
 import { Category } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
 
 const AdminCategories = () => {
-  const { categories, addCategory, updateCategory, deleteCategory } = useStore();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: '', slug: '', image: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const openAdd = () => { setEditing(null); setForm({ name: '', slug: '', image: '' }); setModalOpen(true); };
-  const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, slug: c.slug, image: c.image }); setModalOpen(true); };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/admin/categories');
+      const result = await response.json();
+      if (result.success) {
+        setCategories(result.data.map((cat: { _id?: string; id?: string; name: string; slug: string; image: string; productCount: number }) => ({
+          ...cat,
+          id: cat._id || cat.id
+        })));
+      } else {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast({ title: 'Error', description: 'Failed to fetch categories', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openAdd = () => { 
+    setEditing(null); 
+    setForm({ name: '', slug: '', image: '' }); 
+    setImageFile(null);
+    setModalOpen(true); 
+  };
+  
+  const openEdit = (c: Category) => { 
+    setEditing(c); 
+    setForm({ name: c.name, slug: c.slug, image: c.image }); 
+    setImageFile(null);
+    setModalOpen(true); 
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    setImageFile(file);
+    
+    // Show preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setForm({ ...form, image: reader.result as string });
@@ -24,17 +65,79 @@ const AdminCategories = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    const slug = form.slug || form.name.toLowerCase().replace(/\s+/g, '-');
-    if (editing) {
-      updateCategory(editing.id, { name: form.name, slug, image: form.image || editing.image });
-      toast({ title: 'Category updated' });
-    } else {
-      addCategory({ id: Date.now().toString(), name: form.name, slug, image: form.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&h=800&fit=crop', productCount: 0 });
-      toast({ title: 'Category added' });
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      toast({ title: 'Error', description: 'Category name is required', variant: 'destructive' });
+      return;
     }
-    setModalOpen(false);
+
+    setSubmitting(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('slug', form.slug || form.name.toLowerCase().replace(/\s+/g, '-'));
+      
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (form.image && !form.image.startsWith('data:')) {
+        formData.append('imageUrl', form.image);
+      }
+
+      const url = editing ? `/api/admin/categories/${editing.id}` : '/api/admin/categories';
+      const method = editing ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        body: formData,
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({ title: editing ? 'Category updated' : 'Category added' });
+        setModalOpen(false);
+        fetchCategories(); // Refresh the list
+      } else {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Error saving category:', error);
+      toast({ title: 'Error', description: 'Failed to save category', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/categories/${id}`, {
+        method: 'DELETE',
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({ title: 'Category deleted' });
+        fetchCategories(); // Refresh the list
+      } else {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast({ title: 'Error', description: 'Failed to delete category', variant: 'destructive' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -56,7 +159,7 @@ const AdminCategories = () => {
               </div>
               <div className="flex gap-1">
                 <button onClick={() => openEdit(cat)} className="p-2 hover:bg-muted rounded-lg transition-colors"><Pencil className="h-4 w-4 text-primary" /></button>
-                <button onClick={() => { deleteCategory(cat.id); toast({ title: 'Category deleted' }); }} className="p-2 hover:bg-muted rounded-lg transition-colors"><Trash2 className="h-4 w-4 text-destructive" /></button>
+                <button onClick={() => handleDelete(cat.id)} className="p-2 hover:bg-muted rounded-lg transition-colors"><Trash2 className="h-4 w-4 text-destructive" /></button>
               </div>
             </div>
           </div>
@@ -87,7 +190,10 @@ const AdminCategories = () => {
               </div>
               <div><label className="block text-sm font-medium mb-1">Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" /></div>
               <div><label className="block text-sm font-medium mb-1">Slug</label><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" /></div>
-              <button onClick={handleSave} className="btn-primary w-full">{editing ? 'Update' : 'Add'} Category</button>
+              <button onClick={handleSave} disabled={submitting} className="btn-primary w-full flex items-center justify-center gap-2">
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {editing ? 'Update' : 'Add'} Category
+              </button>
             </div>
           </div>
         </div>
