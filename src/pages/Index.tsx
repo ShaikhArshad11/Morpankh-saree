@@ -9,13 +9,13 @@ import { toast } from '@/hooks/use-toast';
 const Index = () => {
   const products = useStore((s) => s.products);
   const categories = useStore((s) => s.categories);
-  const reviews = useStore((s) => s.reviews);
-  const addReview = useStore((s) => s.addReview);
   const isLoggedIn = useStore((s) => s.isLoggedIn);
   const userName = useStore((s) => s.userName);
   const [loading, setLoading] = useState(true);
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
+  const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll categories
@@ -37,31 +37,59 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const loadApprovedReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const res = await fetch('/api/reviews?approved=true');
+        const data = await res.json();
+        if (res.ok) {
+          setApprovedReviews(data.reviews || []);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    loadApprovedReviews();
+  }, []);
+
   const visibleProducts = products.filter((p) => !p.hidden);
   const bestSellers = visibleProducts.filter((p) => p.featured);
   const newArrivals = visibleProducts.filter((p) => p.isNew);
   const saleProducts = visibleProducts.filter((p) => p.isSale);
   const premiumSarees = visibleProducts.filter((p) => p.isPremium);
   const trendingSarees = visibleProducts.filter((p) => p.isTrending);
-  const approvedReviews = reviews.filter((r) => r.approved);
-
-  const handleReviewSubmit = () => {
+  const handleReviewSubmit = async () => {
     if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
       toast({ title: 'Please fill all fields', variant: 'destructive' });
       return;
     }
-    addReview({
-      id: Date.now().toString(),
-      name: reviewForm.name,
-      rating: reviewForm.rating,
-      comment: reviewForm.comment,
-      date: new Date().toISOString().split('T')[0],
-      avatar: reviewForm.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2),
-      approved: false,
-    });
-    toast({ title: 'Review submitted!', description: 'It will appear after admin approval.' });
-    setReviewForm({ name: isLoggedIn ? userName : '', rating: 5, comment: '' });
-    setReviewModal(false);
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: reviewForm.name,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: 'Review submitted!', description: 'It will appear after admin approval.' });
+        setReviewForm({ name: isLoggedIn ? userName : '', rating: 5, comment: '' });
+        setReviewModal(false);
+      } else {
+        toast({ title: data.error || 'Failed to submit review', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Failed to submit review', variant: 'destructive' });
+    }
   };
 
   const scrollCat = (dir: number) => {
@@ -185,22 +213,28 @@ const Index = () => {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {approvedReviews.map((review) => (
-              <div key={review.id} className="bg-card rounded-xl p-6 card-hover border border-border">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">{review.avatar}</div>
-                  <div>
-                    <p className="font-medium text-sm">{review.name}</p>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
-                      ))}
+            {reviewsLoading ? (
+              <div className="col-span-full text-center text-sm text-muted-foreground">Loading reviews...</div>
+            ) : approvedReviews.length === 0 ? (
+              <div className="col-span-full text-center text-sm text-muted-foreground">No reviews yet.</div>
+            ) : (
+              approvedReviews.map((review: any) => (
+                <div key={review._id} className="bg-card rounded-xl p-6 card-hover border border-border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">{review.avatar}</div>
+                    <div>
+                      <p className="font-medium text-sm">{review.name}</p>
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
+                        ))}
+                      </div>
                     </div>
                   </div>
+                  <p className="text-sm text-muted-foreground">{review.comment}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{review.comment}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

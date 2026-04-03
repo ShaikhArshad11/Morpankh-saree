@@ -1,16 +1,114 @@
+import { useEffect, useState } from 'react';
 import { Check, Trash2, Star } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
 
+type ReviewItem = {
+  _id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  avatar: string;
+  approved: boolean;
+  createdAt: string | null;
+};
+
 const AdminReviews = () => {
-  const { reviews, approveReview, deleteReview } = useStore();
+  const token = useStore((s) => s.token);
+  const isAdmin = useStore((s) => s.isAdmin);
+  const isLoggedIn = useStore((s) => s.isLoggedIn);
+
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const authToken =
+    token ||
+    (typeof window !== 'undefined' ? localStorage.getItem('token') : null) ||
+    (isLoggedIn && isAdmin ? 'admin-token' : null);
+
+  const loadReviews = async () => {
+    if (!authToken) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/reviews', {
+        headers: { authorization: `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({ title: data.error || 'Failed to load reviews', variant: 'destructive' });
+        return;
+      }
+
+      setReviews(data.reviews || []);
+    } catch {
+      toast({ title: 'Failed to load reviews', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken]);
+
+  const approveReview = async (id: string) => {
+    if (!authToken) return;
+    try {
+      const res = await fetch(`/api/admin/reviews/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ approved: true }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: data.error || 'Failed to approve review', variant: 'destructive' });
+        return;
+      }
+
+      toast({ title: 'Review approved' });
+      await loadReviews();
+    } catch {
+      toast({ title: 'Failed to approve review', variant: 'destructive' });
+    }
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!authToken) return;
+    try {
+      const res = await fetch(`/api/admin/reviews/${id}`, {
+        method: 'DELETE',
+        headers: { authorization: `Bearer ${authToken}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: data.error || 'Failed to delete review', variant: 'destructive' });
+        return;
+      }
+
+      toast({ title: 'Review deleted' });
+      await loadReviews();
+    } catch {
+      toast({ title: 'Failed to delete review', variant: 'destructive' });
+    }
+  };
+
   const pending = reviews.filter((r) => !r.approved);
   const approved = reviews.filter((r) => r.approved);
 
   return (
     <AdminLayout>
       <h1 className="font-display text-2xl font-bold mb-6">Reviews Management</h1>
+
+      {isLoading && (
+        <div className="bg-card rounded-xl p-6 border border-border text-sm text-muted-foreground mb-6">
+          Loading...
+        </div>
+      )}
 
       {/* Pending */}
       <div className="mb-8">
@@ -23,7 +121,7 @@ const AdminReviews = () => {
         ) : (
           <div className="space-y-3">
             {pending.map((r) => (
-              <div key={r.id} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
+              <div key={r._id} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
                 <div className="w-10 h-10 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold text-sm shrink-0">{r.avatar}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -38,10 +136,10 @@ const AdminReviews = () => {
                   <p className="text-sm text-muted-foreground">{r.comment}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button onClick={() => { approveReview(r.id); toast({ title: 'Review approved' }); }} className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors" title="Approve">
+                  <button onClick={() => { approveReview(r._id); }} className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors" title="Approve">
                     <Check className="h-4 w-4 text-primary" />
                   </button>
-                  <button onClick={() => { deleteReview(r.id); toast({ title: 'Review deleted' }); }} className="p-2 bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors" title="Delete">
+                  <button onClick={() => { deleteReview(r._id); }} className="p-2 bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors" title="Delete">
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </button>
                 </div>
@@ -55,7 +153,7 @@ const AdminReviews = () => {
       <h2 className="font-display text-lg font-semibold mb-4">Approved Reviews ({approved.length})</h2>
       <div className="space-y-3">
         {approved.map((r) => (
-          <div key={r.id} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
+          <div key={r._id} className="bg-card rounded-xl p-4 border border-border flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shrink-0">{r.avatar}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -68,7 +166,7 @@ const AdminReviews = () => {
               </div>
               <p className="text-sm text-muted-foreground">{r.comment}</p>
             </div>
-            <button onClick={() => { deleteReview(r.id); toast({ title: 'Review deleted' }); }} className="p-2 hover:bg-muted rounded-lg transition-colors shrink-0">
+            <button onClick={() => { deleteReview(r._id); }} className="p-2 hover:bg-muted rounded-lg transition-colors shrink-0">
               <Trash2 className="h-4 w-4 text-destructive" />
             </button>
           </div>

@@ -54,6 +54,7 @@ interface StoreState {
 
   // Wishlist actions
   toggleWishlist: (productId: string) => void;
+  loadWishlist: () => Promise<void>;
 
   // Order actions
   addOrder: (order: Order) => void;
@@ -74,7 +75,7 @@ interface StoreState {
 
 export const useStore = create<StoreState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       products: initialProducts,
       categories: initialCategories,
       orders: initialOrders,
@@ -117,11 +118,58 @@ export const useStore = create<StoreState>()(
       })),
       clearCart: () => set({ cart: [] }),
 
-      toggleWishlist: (productId) => set((s) => ({
-        wishlist: s.wishlist.includes(productId)
-          ? s.wishlist.filter((id) => id !== productId)
-          : [...s.wishlist, productId],
-      })),
+      loadWishlist: async () => {
+        const token = get().token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+        if (!token) {
+          set({ wishlist: [] });
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/wishlist', {
+            headers: { authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            set({ wishlist: Array.isArray(data.wishlist) ? data.wishlist : [] });
+          }
+        } catch {
+          // ignore
+        }
+      },
+
+      toggleWishlist: (productId) => {
+        const state = get();
+        const exists = state.wishlist.includes(productId);
+
+        set({
+          wishlist: exists
+            ? state.wishlist.filter((id) => id !== productId)
+            : [...state.wishlist, productId],
+        });
+
+        const token = state.token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+        if (!state.isLoggedIn || !token) return;
+
+        (async () => {
+          try {
+            if (exists) {
+              await fetch(`/api/wishlist?productId=${encodeURIComponent(productId)}`, {
+                method: 'DELETE',
+                headers: { authorization: `Bearer ${token}` },
+              });
+            } else {
+              await fetch('/api/wishlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', authorization: `Bearer ${token}` },
+                body: JSON.stringify({ productId }),
+              });
+            }
+          } catch {
+            // ignore
+          }
+        })();
+      },
 
       addOrder: (order) => set((s) => ({ orders: [order, ...s.orders] })),
       updateOrderStatus: (id, status) => set((s) => ({
@@ -138,13 +186,19 @@ export const useStore = create<StoreState>()(
       })),
       deleteReview: (id) => set((s) => ({ reviews: s.reviews.filter((r) => r.id !== id) })),
 
-      login: (user, token, isAdmin = false) => set({
-        isLoggedIn: true,
-        userName: user.name,
-        user,
-        token,
-        isAdmin
-      }),
+      login: (user, token, isAdmin = false) => {
+        set({
+          isLoggedIn: true,
+          userName: user.name,
+          user,
+          token,
+          isAdmin,
+        });
+
+        if (!isAdmin) {
+          get().loadWishlist();
+        }
+      },
       logout: () => {
         localStorage.removeItem('token');
         set({
@@ -152,10 +206,18 @@ export const useStore = create<StoreState>()(
           userName: '',
           user: null,
           token: null,
-          isAdmin: false
+          isAdmin: false,
+          wishlist: [],
         });
       },
     }),
-    { name: 'morpankh-store' }
+    {
+      name: 'morpankh-store',
+      onRehydrateStorage: () => (state) => {
+        if (state?.isLoggedIn && !state.isAdmin) {
+          state.loadWishlist();
+        }
+      },
+    }
   )
 );
