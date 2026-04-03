@@ -5,11 +5,31 @@ import { toast } from '@/hooks/use-toast';
 
 const Contact = () => {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: 'Message sent!', description: 'We will get back to you soon.' });
-    setForm({ name: '', email: '', message: '' });
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({ title: 'Message sent!', description: 'We will get back to you soon.' });
+        setForm({ name: '', email: '', message: '' });
+      } else {
+        toast({ title: data.error || 'Failed to send message', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Failed to send message', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,7 +76,9 @@ const Contact = () => {
               <label className="block text-sm font-medium mb-1">Message</label>
               <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required rows={4} className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
             </div>
-            <button type="submit" className="btn-primary w-full">Send Message</button>
+            <button type="submit" disabled={isLoading} className="btn-primary w-full disabled:opacity-50">
+              {isLoading ? 'Sending...' : 'Send Message'}
+            </button>
           </form>
         </div>
       </div>

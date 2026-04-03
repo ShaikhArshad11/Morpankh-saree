@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare, Mail } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
 
@@ -11,6 +11,7 @@ const menuItems = [
   { label: 'Products', to: '/admin/products', icon: Package },
   { label: 'Categories', to: '/admin/categories', icon: FolderTree },
   { label: 'Orders', to: '/admin/orders', icon: ClipboardList },
+  { label: 'Messages', to: '/admin/messages', icon: Mail },
   { label: 'Reviews', to: '/admin/reviews', icon: MessageSquare },
   { label: 'Inventory', to: '/admin/inventory', icon: Warehouse },
   { label: 'Export Data', to: '/admin/export', icon: Download },
