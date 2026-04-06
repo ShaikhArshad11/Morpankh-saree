@@ -14,6 +14,7 @@ const menuItems = [
   { label: 'Reviews', to: '/admin/reviews', icon: MessageSquare },
   { label: 'Inventory', to: '/admin/inventory', icon: Warehouse },
   { label: 'Export Data', to: '/admin/export', icon: Download },
+  { label: 'Logout', to: '#', icon: LogOut, isLogout: true },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
@@ -63,6 +64,18 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         <nav className="flex-1 p-3 space-y-1">
           {menuItems.map((item) => {
             const active = pathname === item.to;
+            if (item.isLogout) {
+              return (
+                <button
+                  key={item.to}
+                  onClick={() => { logout(); router.push('/'); }}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-left text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-destructive`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              );
+            }
             return (
               <Link key={item.to} href={item.to} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? 'bg-sidebar-accent text-sidebar-primary' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'}`}>
                 <item.icon className="h-4 w-4" />
@@ -94,14 +107,27 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar text-sidebar-foreground p-3 flex items-center justify-between">
         <span className="font-display text-sm font-bold">Admin</span>
         <div className="flex gap-2 overflow-x-auto">
-          {menuItems.map((item) => (
-            <Link key={item.to} href={item.to} className={`p-2 rounded-lg relative ${pathname === item.to ? 'bg-sidebar-accent text-sidebar-primary' : 'text-sidebar-foreground/50'}`}>
-              <item.icon className="h-4 w-4" />
-              {item.label === 'Reviews' && pendingReviews > 0 && (
-                <span className="absolute -top-1 -right-1 bg-secondary text-secondary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{pendingReviews}</span>
-              )}
-            </Link>
-          ))}
+          {menuItems.map((item) => {
+            if (item.isLogout) {
+              return (
+                <button
+                  key={item.to}
+                  onClick={() => { logout(); router.push('/'); }}
+                  className={`p-2 rounded-lg relative text-sidebar-foreground/50 hover:text-destructive`}
+                >
+                  <item.icon className="h-4 w-4" />
+                </button>
+              );
+            }
+            return (
+              <Link key={item.to} href={item.to} className={`p-2 rounded-lg relative ${pathname === item.to ? 'bg-sidebar-accent text-sidebar-primary' : 'text-sidebar-foreground/50'}`}>
+                <item.icon className="h-4 w-4" />
+                {item.label === 'Reviews' && pendingReviews > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-secondary text-secondary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{pendingReviews}</span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       </div>
 
