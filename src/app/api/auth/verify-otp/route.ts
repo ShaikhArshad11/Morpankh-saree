@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
 
-const uri = process.env.MONGODB_URI!;
-const client = new MongoClient(uri);
-
 interface User {
   _id: ObjectId;
   name: string;
@@ -17,6 +14,24 @@ interface User {
 }
 
 export async function POST(request: NextRequest) {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return NextResponse.json(
+      { error: 'MONGODB_URI is not configured on the server' },
+      { status: 500 }
+    );
+  }
+
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    return NextResponse.json(
+      { error: 'JWT_SECRET is not configured on the server' },
+      { status: 500 }
+    );
+  }
+
+  const client = new MongoClient(uri);
+
   try {
     const { email, otp } = await request.json();
 
@@ -58,7 +73,7 @@ export async function POST(request: NextRequest) {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email, name: user.name },
-      process.env.JWT_SECRET!,
+      jwtSecret,
       { expiresIn: '7d' }
     );
 
