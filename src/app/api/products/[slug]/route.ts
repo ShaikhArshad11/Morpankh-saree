@@ -94,7 +94,7 @@ export async function GET(
       blouseIncluded: product.blouseIncluded ?? false,
       tags: product.tags || [],
       colors,
-      isSale: product.isSale ?? Boolean(product.salePercent) ?? false,
+      isSale: product.isSale ?? Boolean(product.salePercent),
       isFeatured: product.isFeatured ?? product.featured ?? false,
       rating: product.rating,
       reviewCount: product.reviewCount ?? product.reviews,

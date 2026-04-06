@@ -23,6 +23,28 @@ function toNumber(value: unknown, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+type ColorVariantLike = {
+  colorName?: unknown;
+  images?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getVariantColorName(value: unknown): string | undefined {
+  if (!isRecord(value)) return undefined;
+  const v = value as ColorVariantLike;
+  return typeof v.colorName === 'string' ? v.colorName : undefined;
+}
+
+function getVariantImages(value: unknown): string[] {
+  if (!isRecord(value)) return [];
+  const v = value as ColorVariantLike;
+  if (!Array.isArray(v.images)) return [];
+  return (v.images as unknown[]).filter((u): u is string => typeof u === 'string' && u.length > 0);
+}
+
 export async function GET(_request: NextRequest) {
   try {
     const database = await getDatabase();
@@ -39,15 +61,13 @@ export async function GET(_request: NextRequest) {
       const rawColors = p.colors as unknown;
       const colorNames = Array.isArray(rawColors)
         ? rawColors
-            .map((c) => (typeof c === 'string' ? c : (c as any)?.colorName))
+            .map((c) => (typeof c === 'string' ? c : getVariantColorName(c)))
             .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
         : [];
 
       const imagesFromVariants = Array.isArray(rawColors)
         ? rawColors
-            .flatMap((c) => (typeof c === 'object' && c ? ((c as any).images as unknown) : []))
-            .flatMap((imgs) => (Array.isArray(imgs) ? imgs : []))
-            .filter((u): u is string => typeof u === 'string' && u.length > 0)
+            .flatMap((c) => getVariantImages(c))
         : [];
 
       const images = (
