@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const client = new MongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const contactMessages = db.collection<ContactMessage>('contact_messages');
 
     const messagesRaw = await contactMessages

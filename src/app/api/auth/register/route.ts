@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const users = db.collection<User>('users');
 
     // Check if user already exists

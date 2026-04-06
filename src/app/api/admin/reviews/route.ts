@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const reviews = db.collection<ReviewDoc>('reviews');
 
     const reviewsRaw = await reviews

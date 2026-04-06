@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const users = db.collection<User>('users');
 
     const user = await users.findOne({ id: decoded.id });
@@ -157,7 +157,7 @@ export async function PUT(request: NextRequest) {
     }
 
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const users = db.collection<User>('users');
 
     // Check if email is being changed and if it's already taken

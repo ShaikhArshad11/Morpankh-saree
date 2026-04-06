@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const wishlists = db.collection<WishlistDoc>('wishlists');
 
     const doc = await wishlists.findOne({ userId: decoded.id });
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const wishlists = db.collection<WishlistDoc>('wishlists');
 
     const now = new Date();
@@ -184,7 +184,7 @@ export async function DELETE(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const wishlists = db.collection<WishlistDoc>('wishlists');
 
     const now = new Date();

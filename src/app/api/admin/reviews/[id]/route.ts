@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
+import { getMongoClient, getDatabaseName } from '@/lib/database';
 
 function isAdminRequest(request: NextRequest) {
   const auth = (request.headers.get('authorization') || '').trim();
   const match = auth.match(/^Bearer\s+(.+)$/i);
   const token = match?.[1]?.trim();
   return token === 'admin-token';
-}
-
-async function getMongoClient(uri: string) {
-  return new MongoClient(uri, {
-    serverSelectionTimeoutMS: 5_000,
-    connectTimeoutMS: 5_000,
-  });
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -33,7 +27,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db(getDatabaseName());
     const reviews = db.collection('reviews');
 
     const body = await request.json().catch(() => ({}));
@@ -75,7 +69,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db(getDatabaseName());
     const reviews = db.collection('reviews');
 
     const result = await reviews.deleteOne({ _id: new ObjectId(id) });
