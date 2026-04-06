@@ -36,6 +36,8 @@ interface StoreState {
   } | null;
   token: string | null;
 
+  loadProducts: () => Promise<void>;
+
   // Product actions
   addProduct: (product: Product) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
@@ -90,6 +92,18 @@ export const useStore = create<StoreState>()(
       userName: '',
       user: null,
       token: null,
+
+      loadProducts: async () => {
+        try {
+          const res = await fetch('/api/products');
+          const data = await res.json();
+          if (res.ok && data?.success && Array.isArray(data.data)) {
+            set({ products: data.data });
+          }
+        } catch {
+          // ignore
+        }
+      },
 
       addProduct: (product) => set((s) => ({ products: [...s.products, product] })),
       updateProduct: (id, updates) => set((s) => ({

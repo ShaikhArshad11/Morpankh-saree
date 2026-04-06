@@ -5,6 +5,12 @@ import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
 
 // Database interfaces
+interface ColorVariant {
+  colorName: string;
+  stock: number;
+  images: string[];
+}
+
 interface DbProduct {
   _id?: string;
   name: string;
@@ -13,12 +19,12 @@ interface DbProduct {
   comparePrice: number;
   category: string;
   stock: number;
-  colors: string[];
+  colors: ColorVariant[];
   description: string;
   fabric: string;
   salePercent?: number;
   hidden?: boolean;
-  images: string[];
+  images?: string[];
   sku?: string;
   tags?: string[];
   featured?: boolean;
@@ -46,12 +52,17 @@ type ProductForm = {
   salePrice: string;
   category: string;
   stock: string;
-  colors: { name: string; image: string }[];
+
+  colors: {
+    colorName: string;
+    stock: string;
+    images: string[];
+  }[];
+
   description: string;
   fabric: string;
   salePercent: string;
   hidden: boolean;
-  imageUrl: string;
   tags: string[];
   featured: boolean;
   isNew: boolean;
@@ -75,7 +86,7 @@ const AdminProducts = () => {
     name: '', 
     sku: '', 
     originalPrice: '', salePrice: '', category: '', stock: '', colors: [],
-    description: '', fabric: '', salePercent: '', hidden: false, imageUrl: '',
+    description: '', fabric: '', salePercent: '', hidden: false,
     tags: [], featured: false, isNew: false, isPremium: false,
     isTrending: false, rating: 0, reviews: 0,
     sareeLength: '',
@@ -123,7 +134,7 @@ const AdminProducts = () => {
       name: '', 
       sku: '', 
       originalPrice: '', salePrice: '', category: categories[0]?.slug || '', stock: '', colors: [],
-      description: '', fabric: '', salePercent: '', hidden: false, imageUrl: '',
+      description: '', fabric: '', salePercent: '', hidden: false,
       tags: [], featured: false, isNew: false, isPremium: false,
       isTrending: false, rating: 0, reviews: 0,
       sareeLength: '',
@@ -141,12 +152,15 @@ const AdminProducts = () => {
       salePrice: p.price.toString(),
       category: p.category, 
       stock: p.stock.toString(), 
-      colors: p.colors.map(color => ({ name: color, image: '' })) || [],
+      colors: (p.colors || []).map((c) => ({
+        colorName: c.colorName,
+        stock: c.stock.toString(),
+        images: c.images || [],
+      })),
       description: p.description, 
       fabric: p.fabric,
       salePercent: p.salePercent?.toString() || '', 
       hidden: p.hidden || false, 
-      imageUrl: p.images[0] || '',
       tags: p.tags || [],
       featured: p.featured || false,
       isNew: p.isNew || false,
@@ -162,38 +176,32 @@ const AdminProducts = () => {
 
   // Color management functions
   const addColor = () => {
-    const newColor = prompt('Enter color name:');
-    if (newColor && newColor.trim()) {
-      setForm({ ...form, colors: [...form.colors, { name: newColor.trim(), image: '' }] });
-    }
+    setForm({
+      ...form,
+      colors: [...form.colors, { colorName: '', stock: '', images: [] }],
+    });
   };
 
   const removeColor = (index: number) => {
     setForm({ ...form, colors: form.colors.filter((_, i) => i !== index) });
   };
 
-  const updateColorImage = (index: number, image: string) => {
-    const updatedColors = [...form.colors];
-    updatedColors[index].image = image;
-    setForm({ ...form, colors: updatedColors });
-  };
-
-  const handleColorImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadColorImage = (colorIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      updateColorImage(index, reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setForm({ ...form, imageUrl: reader.result as string });
+      const img = reader.result as string;
+      setForm((prev) => {
+        const nextColors = [...prev.colors];
+        const current = nextColors[colorIndex];
+        if (!current) return prev;
+        nextColors[colorIndex] = {
+          ...current,
+          images: [...(current.images || []), img],
+        };
+        return { ...prev, colors: nextColors };
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -201,7 +209,6 @@ const AdminProducts = () => {
   const handleSave = async () => {
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
     const salePercent = form.salePercent ? Number(form.salePercent) : undefined;
-    const images = form.imageUrl ? [form.imageUrl] : (editing ? editing.images : ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&h=800&fit=crop']);
     const data: Partial<DbProduct> = {
       name: form.name, 
       slug, 
@@ -209,7 +216,11 @@ const AdminProducts = () => {
       comparePrice: Number(form.originalPrice),
       category: form.category, 
       stock: Number(form.stock), 
-      colors: form.colors.map(color => color.name),
+      colors: form.colors.map((c) => ({
+        colorName: c.colorName,
+        stock: Number(c.stock),
+        images: c.images,
+      })),
       description: form.description, 
       fabric: form.fabric, 
       hidden: form.hidden, 
@@ -224,7 +235,6 @@ const AdminProducts = () => {
       reviews: form.reviews,
       sareeLength: form.sareeLength,
       blouseIncluded: form.blouseIncluded,
-      images: form.colors.length > 0 ? form.colors.map(color => color.image).filter(img => img) : [form.imageUrl],
     };
     
     try {
@@ -383,7 +393,11 @@ const AdminProducts = () => {
               {products.map((p) => (
                 <tr key={p._id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="p-4 flex items-center gap-3">
-                    <img src={p.images[0]} alt={p.name} className="w-10 h-12 object-cover rounded" />
+                    <img
+                      src={p.colors?.[0]?.images?.[0] || p.images?.[0] || '/placeholder.svg'}
+                      alt={p.name}
+                      className="w-10 h-12 object-cover rounded"
+                    />
                     <div>
                       <span className="font-medium">{p.name}</span>
                       {p.hidden && <span className="ml-2 text-xs text-destructive">(Hidden)</span>}
@@ -483,14 +497,29 @@ const AdminProducts = () => {
                           <label className="block text-sm font-medium mb-1">Color Name</label>
                           <input
                             type="text"
-                            value={color.name}
+                            value={color.colorName}
                             onChange={(e) => {
                               const updatedColors = [...form.colors];
-                              updatedColors[index].name = e.target.value;
+                              updatedColors[index].colorName = e.target.value;
                               setForm({ ...form, colors: updatedColors });
                             }}
                             className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                             placeholder="Enter color name"
+                          />
+                        </div>
+                        <div className="w-28">
+                          <label className="block text-sm font-medium mb-1">Stock</label>
+                          <input
+                            type="number"
+                            value={color.stock}
+                            onChange={(e) => {
+                              const updatedColors = [...form.colors];
+                              updatedColors[index].stock = e.target.value;
+                              setForm({ ...form, colors: updatedColors });
+                            }}
+                            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="0"
+                            min="0"
                           />
                         </div>
                         <button
@@ -501,22 +530,24 @@ const AdminProducts = () => {
                         </button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Color Image</label>
+                        <label className="block text-sm font-medium mb-1">Images</label>
                         <div className="flex items-center gap-3">
-                          {color.image && (
-                            <img src={color.image} alt={color.name} className="w-16 h-16 object-cover rounded border border-border" />
+                          {Array.isArray(color.images) && color.images.length > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {color.images.slice(0, 4).map((img, imgIdx) => (
+                                <img
+                                  key={imgIdx}
+                                  src={img}
+                                  alt={color.colorName}
+                                  className="w-16 h-16 object-cover rounded border border-border"
+                                />
+                              ))}
+                            </div>
                           )}
                           <label className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg text-sm cursor-pointer hover:bg-muted/80 transition-colors">
-                            <Upload className="h-4 w-4" /> Upload Color Image
-                            <input type="file" accept="image/*" onChange={(e) => handleColorImageUpload(index, e)} className="hidden" />
+                            <Upload className="h-4 w-4" /> Upload Image
+                            <input type="file" accept="image/*" onChange={(e) => uploadColorImage(index, e)} className="hidden" />
                           </label>
-                          <input 
-                            type="text" 
-                            value={color.image} 
-                            onChange={(e) => updateColorImage(index, e.target.value)} 
-                            placeholder="Or paste image URL" 
-                            className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" 
-                          />
                         </div>
                       </div>
                     </div>
