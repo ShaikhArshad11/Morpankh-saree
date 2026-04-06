@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const reviews = db.collection<ReviewDoc>('reviews');
 
     const query: Filter<ReviewDoc> = {};
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       .slice(0, 2);
 
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const reviews = db.collection<ReviewDoc>('reviews');
 
     const result = await reviews.insertOne({

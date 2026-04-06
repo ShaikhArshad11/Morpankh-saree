@@ -13,12 +13,18 @@ const ProductDetail = () => {
   const router = useRouter();
   const { products, addToCart, toggleWishlist, wishlist } = useStore();
   const product = products.find((p) => p.slug === slug);
+  
   const [selectedColor, setSelectedColor] = useState(product?.colors[0] || '');
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [mainImageSrc, setMainImageSrc] = useState(product?.images?.[0] || '/placeholder.svg');
   const [thumbErrors, setThumbErrors] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    const nextSrc = product?.images?.[selectedImage] || '/placeholder.svg';
+    setMainImageSrc(nextSrc);
+  }, [product?.images, selectedImage]);
 
   if (!product) return (
     <PublicLayout>
@@ -31,11 +37,6 @@ const ProductDetail = () => {
   const isWished = wishlist.includes(product.id);
   const discount = Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100);
   const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
-
-  useEffect(() => {
-    const nextSrc = product.images?.[selectedImage] || '/placeholder.svg';
-    setMainImageSrc(nextSrc);
-  }, [product.images, selectedImage]);
 
   const handleAddToCart = () => {
     addToCart({ productId: product.id, name: product.name, image: product.images[0], price: product.price, color: selectedColor, size: selectedSize, quantity });

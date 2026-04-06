@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     stage = 'mongo';
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const adminOtps = db.collection<AdminOtpDoc>('admin_otps');
 
     await adminOtps.updateOne(

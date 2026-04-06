@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const adminOtps = db.collection<AdminOtpDoc>('admin_otps');
 
     const record = await adminOtps.findOne({ email: inputEmail });

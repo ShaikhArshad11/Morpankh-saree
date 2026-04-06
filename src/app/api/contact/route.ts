@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const contactMessages = db.collection<ContactMessage>('contact_messages');
 
     const messagesRaw = await contactMessages
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     await client.connect();
-    const db = client.db('morepankh_db');
+    const db = client.db('morpankh_saree');
     const contactMessages = db.collection<ContactMessage>('contact_messages');
 
     await contactMessages.insertOne({
