@@ -29,7 +29,7 @@ async function sendOTP(email: string, otp: string) {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.EMAIL_PORT || '465'),
-      secure: process.env.EMAIL_USE_SSL === 'true' || true,
+      secure: process.env.EMAIL_USE_SSL === 'true',
       auth: {
         user: process.env.EMAIL_HOST_USER,
         pass: process.env.EMAIL_HOST_PASSWORD,

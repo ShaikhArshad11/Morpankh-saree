@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 
 interface User {
   _id: ObjectId;
@@ -11,6 +12,71 @@ interface User {
   otpExpiry?: Date;
   verified: boolean;
   createdAt: Date;
+}
+
+async function sendWelcomeEmail(email: string, name: string) {
+  try {
+    console.log('📧 Attempting to send welcome email to:', email);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT || '465'),
+      secure: process.env.EMAIL_USE_SSL === 'true',
+      auth: {
+        user: process.env.EMAIL_HOST_USER,
+        pass: process.env.EMAIL_HOST_PASSWORD,
+      },
+      logger: true,
+      debug: true,
+    });
+
+    // Verify SMTP Connection
+    await transporter.verify();
+    console.log('✓ SMTP connection verified successfully');
+
+    const mailOptions = {
+      from: `"Morpankh Saree" <${process.env.EMAIL_HOST_USER}>`,
+      to: email,
+      subject: 'Welcome to Morpankh Saree - Account Verified Successfully!',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="margin: 0 0 12px; color: #2563eb;">Welcome to Morpankh Saree, ${name}!</h2>
+          <p style="margin: 0 0 16px;">Congratulations! Your email has been successfully verified and your account is now active.</p>
+          
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin: 0 0 12px; color: #1f2937;">What you can do now:</h3>
+            <ul style="margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px;">Browse our exclusive collection of traditional sarees</li>
+              <li style="margin-bottom: 8px;">Add items to your wishlist</li>
+              <li style="margin-bottom: 8px;">Place orders securely</li>
+              <li style="margin-bottom: 8px;">Track your order history</li>
+              <li style="margin-bottom: 8px;">Get personalized recommendations</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="http://localhost:3000" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Start Shopping Now</a>
+          </div>
+          
+          <p style="margin: 20px 0 0; color: #6b7280; font-size: 14px;">
+            If you have any questions, feel free to contact our support team.
+          </p>
+          
+          <p style="margin: 8px 0 0; color: #6b7280; font-size: 14px;">
+            Happy Shopping!<br>
+            <strong>Morpankh Saree Team</strong>
+          </p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✓ Welcome email sent successfully:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('✗ Failed to send welcome email:', error);
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -69,6 +135,12 @@ export async function POST(request: NextRequest) {
         $unset: { otp: 1, otpExpiry: 1 },
       }
     );
+
+    // Send welcome email after successful verification
+    const emailSent = await sendWelcomeEmail(user.email, user.name);
+    if (!emailSent) {
+      console.warn('Welcome email failed to send, but account verification succeeded');
+    }
 
     // Generate JWT token
     const token = jwt.sign(
