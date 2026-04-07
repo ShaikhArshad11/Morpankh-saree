@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Youtube, MessageCircle } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import Image from 'next/image';
 
 const Footer = () => {
   return (
@@ -9,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Logo Section */}
           <div>
-            <img src={logo.src} alt="Morpankh Saree" className="h-12 w-auto mb-4 brightness-0 invert" />
+            <Image src={logo} alt="Morpankh Saree" height={120} width={120} />
             <p className="text-background/70 text-sm leading-relaxed">
               परंपरेचा मोरपंखी स्पर्श, सौंदर्याची नवी ओळख
             </p>

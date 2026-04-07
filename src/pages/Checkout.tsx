@@ -6,8 +6,16 @@ import { toast } from '@/hooks/use-toast';
 
 const Checkout = () => {
   const router = useRouter();
-  const { cart, clearCart, addOrder } = useStore();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', city: '', state: 'Maharashtra', pincode: '' });
+  const { cart, clearCart, addOrder, user, token } = useStore();
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    phone: user?.mobile || '',
+    email: user?.email || '',
+    address: user?.address || '',
+    city: user?.city || '',
+    state: 'Maharashtra',
+    pincode: user?.pincode || '',
+  });
   const [processing, setProcessing] = useState(false);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -15,20 +23,67 @@ const Checkout = () => {
     e.preventDefault();
     if (cart.length === 0) { toast({ title: 'Cart is empty', variant: 'destructive' }); return; }
     setProcessing(true);
-    setTimeout(() => {
-      const order = {
-        id: Date.now().toString(),
-        orderNumber: `MPS-${1000 + Math.floor(Math.random() * 9000)}`,
-        customerName: form.name, customerEmail: form.email, customerPhone: form.phone,
-        address: form.address, city: form.city, state: form.state, pincode: form.pincode,
-        items: cart.map((c) => ({ productId: c.productId, name: c.name, color: c.color, size: c.size, quantity: c.quantity, price: c.price })),
-        subtotal, total: subtotal, paymentStatus: 'paid' as const, orderStatus: 'confirmed' as const, date: new Date().toISOString().split('T')[0],
-      };
-      addOrder(order);
-      clearCart();
-      setProcessing(false);
-      router.push('/order-success');
-    }, 2000);
+    (async () => {
+      try {
+        const customerEmail = (user?.email || form.email).trim();
+        const customerName = (user?.name || form.name).trim();
+        const customerPhone = (user?.mobile || form.phone).trim();
+
+        const orderPayload = {
+          orderNumber: `MPS-${1000 + Math.floor(Math.random() * 9000)}`,
+          customerName,
+          customerEmail,
+          customerPhone,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          pincode: form.pincode,
+          items: cart.map((c) => ({ productId: c.productId, name: c.name, color: c.color, size: c.size, quantity: c.quantity, price: c.price })),
+          subtotal,
+          total: subtotal,
+          paymentStatus: 'paid' as const,
+          orderStatus: 'confirmed' as const,
+          date: new Date().toISOString().split('T')[0],
+        };
+
+        const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+        if (!authToken) {
+          toast({ title: 'Please login to place order', variant: 'destructive' });
+          setProcessing(false);
+          router.push('/login');
+          return;
+        }
+
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(orderPayload),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          const msg = data?.error || 'Failed to place order';
+          toast({ title: msg, variant: 'destructive' });
+
+          const localOrder = { id: Date.now().toString(), ...orderPayload };
+          addOrder(localOrder);
+          clearCart();
+          setProcessing(false);
+          router.push('/order-success');
+          return;
+        }
+
+        clearCart();
+        setProcessing(false);
+        router.push('/order-success');
+      } catch {
+        toast({ title: 'Order failed', description: 'Network error. Please try again.', variant: 'destructive' });
+        setProcessing(false);
+      }
+    })();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });

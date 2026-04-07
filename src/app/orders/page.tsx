@@ -1,10 +1,69 @@
 "use client";
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 
+type OrderItem = { productId: string; name: string; color: string; size?: string; quantity: number; price: number };
+type Order = {
+  id?: string;
+  _id?: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  items: OrderItem[];
+  subtotal: number;
+  total: number;
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  orderStatus: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  date: string;
+};
+
 const OrdersPage = () => {
-  const { isLoggedIn, user, orders } = useStore((s) => ({ isLoggedIn: s.isLoggedIn, user: s.user, orders: s.orders }));
+  const { isLoggedIn, user, token } = useStore((s) => ({ isLoggedIn: s.isLoggedIn, user: s.user, token: s.token }));
+  const [myOrders, setMyOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isLoggedIn || !user) {
+      setMyOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+    if (!authToken) {
+      setMyOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await fetch('/api/orders', {
+          headers: {
+            authorization: `Bearer ${authToken}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data?.success && Array.isArray(data.data)) {
+          setMyOrders(data.data as Order[]);
+        } else {
+          setMyOrders([]);
+        }
+      } catch {
+        setMyOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [isLoggedIn, user, token]);
 
   if (!isLoggedIn || !user) {
     return (
@@ -18,12 +77,14 @@ const OrdersPage = () => {
     );
   }
 
-  const myOrders = orders.filter((order) => order.customerEmail.toLowerCase() === user.email.toLowerCase());
-
   return (
     <div className="container mx-auto py-16 px-4">
       <h1 className="text-3xl font-bold mb-4">My Orders</h1>
-      {myOrders.length === 0 ? (
+      {loading ? (
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <p className="text-base text-muted-foreground mb-2">Loading your orders...</p>
+        </div>
+      ) : myOrders.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <p className="text-base text-muted-foreground mb-2">You do not have any past orders yet.</p>
           <Link href="/products" className="inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors">

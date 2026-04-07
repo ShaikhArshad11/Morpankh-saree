@@ -5,6 +5,7 @@ import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
+import { Category } from '@/data/mockData';
 
 type ApprovedReviewItem = {
   _id: string;
@@ -17,9 +18,9 @@ type ApprovedReviewItem = {
 
 const Index = () => {
   const products = useStore((s) => s.products);
-  const categories = useStore((s) => s.categories);
   const isLoggedIn = useStore((s) => s.isLoggedIn);
   const userName = useStore((s) => s.userName);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
@@ -63,6 +64,24 @@ const Index = () => {
     };
 
     loadApprovedReviews();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const result = await response.json();
+        if (response.ok && result?.success && Array.isArray(result.data)) {
+          setCategories(result.data as Category[]);
+        } else {
+          setCategories([]);
+        }
+      } catch {
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   const visibleProducts = products.filter((p) => !p.hidden);
@@ -171,14 +190,36 @@ const Index = () => {
           <source src="/hero.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-foreground/40" />
-        <div className="relative z-10 h-full flex items-center justify-center text-center">
-          <div className="max-w-2xl px-4">
-            <h1 className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">Exquisite Saree Collections</h1>
-            <p className="text-primary-foreground/80 text-lg mb-6">Handcrafted Banarasi, Paithani, Kanjivaram and more — timeless elegance for every occasion.</p>
-            <Link href="/products" className="inline-block bg-card text-foreground px-8 py-3 rounded-lg font-medium hover:bg-card/90 transition-colors">
-              Shop Now
-            </Link>
-          </div>
+        <div className="relative z-10 h-full flex items-center justify-start text-center">
+         <div className="max-w-2xl px-4">
+
+  {/* Heading */}
+  <h1 className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4 leading-tight md:leading-[1.2] max-w-xl">
+    परंपरेचा मोरपंखी स्पर्श,
+    <br className="hidden md:block" />
+    <span className="block mt-2 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+      सौंदर्याची नवी ओळख
+    </span>
+  </h1>
+
+  {/* Subtext */}
+  <p className="text-primary-foreground/80 text-lg mb-8 max-w-lg">
+    Handcrafted Banarasi, Paithani, Kanjivaram and more — 
+    <span className="text-white font-medium"> timeless elegance</span> for every occasion.
+  </p>
+
+  {/* Button */}
+  <Link
+    href="/products"
+    className="group inline-flex items-center gap-2 bg-white text-primary px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+  >
+    Shop Now
+    <span className="transition-transform duration-300 group-hover:translate-x-1">
+      →
+    </span>
+  </Link>
+
+</div>
         </div>
       </section>
 
