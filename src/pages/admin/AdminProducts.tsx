@@ -95,6 +95,8 @@ const AdminProducts = () => {
     blouseIncluded: false,
   });
 
+  const totalStock = form.colors.reduce((sum, color) => sum + Number(color.stock || 0), 0);
+
   // Fetch data from database
   useEffect(() => {
     const fetchData = async () => {
@@ -217,7 +219,7 @@ const AdminProducts = () => {
       price: Number(form.salePrice), 
       comparePrice: Number(form.originalPrice),
       category: form.category, 
-      stock: Number(form.stock), 
+      stock: totalStock,
       colors: form.colors.map((c) => ({
         colorName: c.colorName,
         stock: Number(c.stock),
@@ -563,18 +565,7 @@ const AdminProducts = () => {
                 </div>
               </div>
 
-              {/* Other Fields */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Stock Quantity</label>
-                  <input
-                    type="number"
-                    value={form.stock}
-                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                    className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="0"
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Fabric</label>
                   <input
@@ -584,6 +575,9 @@ const AdminProducts = () => {
                     className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Enter fabric type"
                   />
+                </div>
+                <div className="rounded-3xl border border-border bg-muted/70 p-3 text-sm text-muted-foreground">
+                  Total product stock is calculated from color quantities: <span className="font-semibold text-foreground">{totalStock}</span>
                 </div>
               </div>
 
