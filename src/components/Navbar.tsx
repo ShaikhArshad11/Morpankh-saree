@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ShoppingCart, Heart, User, Menu, X, LogOut } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
@@ -14,6 +15,7 @@ const navLinks = [
 ];
 
 const Navbar = () => {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const cart = useStore((s) => s.cart);
   const wishlist = useStore((s) => s.wishlist);
@@ -23,6 +25,12 @@ const Navbar = () => {
   const logout = useStore((s) => s.logout);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const [userMenu, setUserMenu] = useState(false);
+
+  const isActive = (href: string) => {
+    if (!pathname) return false;
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
@@ -34,8 +42,19 @@ const Navbar = () => {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <Link key={link.to} href={link.to} className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">
+            <Link
+              key={link.to}
+              href={link.to}
+              className={
+                isActive(link.to)
+                  ? 'relative text-sm font-semibold text-primary px-3 py-1.5 rounded-full bg-primary/10 ring-1 ring-primary/20'
+                  : 'relative text-sm font-medium text-foreground/80 hover:text-primary transition-colors'
+              }
+            >
               {link.label}
+              {isActive(link.to) ? (
+                <span className="absolute left-1/2 -bottom-2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
+              ) : null}
             </Link>
           ))}
         </div>
@@ -107,7 +126,16 @@ const Navbar = () => {
         <div className="md:hidden bg-card border-t border-border animate-slide-in-right">
           <div className="flex flex-col p-4 gap-3">
             {navLinks.map((link) => (
-              <Link key={link.to} href={link.to} onClick={() => setMobileOpen(false)} className="py-2 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors">
+              <Link
+                key={link.to}
+                href={link.to}
+                onClick={() => setMobileOpen(false)}
+                className={
+                  isActive(link.to)
+                    ? 'py-2 px-4 rounded-lg transition-colors bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
+                    : 'py-2 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors'
+                }
+              >
                 {link.label}
               </Link>
             ))}
