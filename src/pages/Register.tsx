@@ -1,18 +1,278 @@
-import { useState } from 'react';
+// import { useState } from 'react';
+// import Link from 'next/link';
+// import { useRouter } from 'next/navigation';
+// import PublicLayout from '@/components/PublicLayout';
+// import { useStore } from '@/store/useStore';
+// import { toast } from '@/hooks/use-toast';
+// import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+
+// const Register = () => {
+//   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+//   const [otp, setOtp] = useState('');
+//   const [step, setStep] = useState<'register' | 'verify'>('register');
+//   const [isLoading, setIsLoading] = useState(false);
+//   const { login } = useStore();
+//   const router = useRouter();
+
+//   const handleRegister = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (form.password !== form.confirmPassword) {
+//       toast({ title: 'Passwords do not match', variant: 'destructive' });
+//       return;
+//     }
+
+//     setIsLoading(true);
+//     try {
+//       const response = await fetch('/api/auth/register', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({
+//           name: form.name,
+//           email: form.email,
+//           password: form.password,
+//         }),
+//       });
+
+//       const data = await response.json();
+
+//       if (response.ok) {
+//         toast({ title: 'Registration successful! Please check your email for OTP.' });
+//         setStep('verify');
+//       } else {
+//         toast({ title: data.error, variant: 'destructive' });
+//       }
+//     } catch (error) {
+//       toast({ title: 'Registration failed. Please try again.', variant: 'destructive' });
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const handleVerifyOTP = async () => {
+//     if (otp.length !== 6) {
+//       toast({ title: 'Please enter a valid 6-digit OTP', variant: 'destructive' });
+//       return;
+//     }
+
+//     setIsLoading(true);
+//     try {
+//       const response = await fetch('/api/auth/verify-otp', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({
+//           email: form.email,
+//           otp,
+//         }),
+//       });
+
+//       const data = await response.json();
+
+//       if (response.ok) {
+//         // Store token in localStorage
+//         localStorage.setItem('token', data.token);
+
+//         // Update store
+//         login(data.user, data.token);
+
+//         toast({ title: 'Account verified successfully! Welcome to Morpankh Saree.' });
+//         router.push('/');
+//       } else {
+//         toast({ title: data.error, variant: 'destructive' });
+//       }
+//     } catch (error) {
+//       toast({ title: 'OTP verification failed. Please try again.', variant: 'destructive' });
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const handleResendOTP = async () => {
+//     setIsLoading(true);
+//     try {
+//       const response = await fetch('/api/auth/register', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({
+//           name: form.name,
+//           email: form.email,
+//           password: form.password,
+//         }),
+//       });
+
+//       const data = await response.json();
+
+//       if (response.ok) {
+//         toast({ title: 'OTP sent successfully! Please check your email.' });
+//       } else {
+//         toast({ title: data.error, variant: 'destructive' });
+//       }
+//     } catch (error) {
+//       toast({ title: 'Failed to resend OTP. Please try again.', variant: 'destructive' });
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   if (step === 'verify') {
+//     return (
+//       <PublicLayout>
+//         <div className="container mx-auto px-4 py-16 max-w-md">
+//           <div className="bg-card rounded-xl p-8 border border-border">
+//             <h1 className="font-display text-2xl font-bold text-center mb-6">Verify Your Email</h1>
+//             <p className="text-center text-muted-foreground mb-6">
+//               We've sent a 6-digit OTP to <strong>{form.email}</strong>
+//             </p>
+
+//             <div className="space-y-4">
+//               <div className="flex justify-center">
+//                 <InputOTP
+//                   maxLength={6}
+//                   value={otp}
+//                   onChange={(value) => setOtp(value)}
+//                 >
+//                   <InputOTPGroup>
+//                     <InputOTPSlot index={0} />
+//                     <InputOTPSlot index={1} />
+//                     <InputOTPSlot index={2} />
+//                     <InputOTPSlot index={3} />
+//                     <InputOTPSlot index={4} />
+//                     <InputOTPSlot index={5} />
+//                   </InputOTPGroup>
+//                 </InputOTP>
+//               </div>
+
+//               <button
+//                 onClick={handleVerifyOTP}
+//                 disabled={isLoading || otp.length !== 6}
+//                 className="btn-primary w-full disabled:opacity-50"
+//               >
+//                 {isLoading ? 'Verifying...' : 'Verify OTP'}
+//               </button>
+
+//               <button
+//                 onClick={handleResendOTP}
+//                 disabled={isLoading}
+//                 className="w-full text-sm text-primary hover:underline disabled:opacity-50"
+//               >
+//                 {isLoading ? 'Sending...' : 'Resend OTP'}
+//               </button>
+//             </div>
+
+//             <p className="text-center text-sm text-muted-foreground mt-4">
+//               <button
+//                 onClick={() => setStep('register')}
+//                 className="text-primary font-medium hover:underline"
+//               >
+//                 Change Email
+//               </button>
+//             </p>
+//           </div>
+//         </div>
+//       </PublicLayout>
+//     );
+//   }
+
+//   return (
+//     <PublicLayout>
+//       <div className="container mx-auto px-4 py-16 max-w-md">
+//         <div className="bg-card rounded-xl p-8 border border-border">
+//           <h1 className="font-display text-2xl font-bold text-center mb-6">Register</h1>
+//           <form onSubmit={handleRegister} className="space-y-4">
+//             <div>
+//               <label className="block text-sm font-medium mb-1">Name</label>
+//               <input
+//                 type="text"
+//                 value={form.name}
+//                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+//                 required
+//                 className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium mb-1">Email</label>
+//               <input
+//                 type="email"
+//                 value={form.email}
+//                 onChange={(e) => setForm({ ...form, email: e.target.value })}
+//                 required
+//                 className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium mb-1">Password</label>
+//               <input
+//                 type="password"
+//                 value={form.password}
+//                 onChange={(e) => setForm({ ...form, password: e.target.value })}
+//                 required
+//                 minLength={6}
+//                 className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium mb-1">Confirm Password</label>
+//               <input
+//                 type="password"
+//                 value={form.confirmPassword}
+//                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+//                 required
+//                 className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+//               />
+//             </div>
+
+//             <button
+//               type="submit"
+//               disabled={isLoading}
+//               className="btn-primary w-full disabled:opacity-50"
+//             >
+//               {isLoading ? 'Creating Account...' : 'Create Account'}
+//             </button>
+//           </form>
+
+//           <p className="text-center text-sm text-muted-foreground mt-4">
+//             Already have an account? <Link href="/login" className="text-primary font-medium">Login</Link>
+//           </p>
+//         </div>
+//       </div>
+//     </PublicLayout>
+//   );
+// };
+
+// export default Register;
+
+
+
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PublicLayout from '@/components/PublicLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import Image from 'next/image';
+
+const FloatingOrb = ({ style }: { style: React.CSSProperties }) => (
+  <div className="absolute rounded-full pointer-events-none" style={style} />
+);
 
 const Register = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'register' | 'verify'>('register');
   const [isLoading, setIsLoading] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { login } = useStore();
   const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 80);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,28 +280,21 @@ const Register = () => {
       toast({ title: 'Passwords do not match', variant: 'destructive' });
       return;
     }
-
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-        }),
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         toast({ title: 'Registration successful! Please check your email for OTP.' });
         setStep('verify');
       } else {
         toast({ title: data.error, variant: 'destructive' });
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'Registration failed. Please try again.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
@@ -53,33 +306,23 @@ const Register = () => {
       toast({ title: 'Please enter a valid 6-digit OTP', variant: 'destructive' });
       return;
     }
-
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          otp,
-        }),
+        body: JSON.stringify({ email: form.email, otp }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
-        // Store token in localStorage
         localStorage.setItem('token', data.token);
-
-        // Update store
         login(data.user, data.token);
-
         toast({ title: 'Account verified successfully! Welcome to Morpankh Saree.' });
         router.push('/');
       } else {
         toast({ title: data.error, variant: 'destructive' });
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'OTP verification failed. Please try again.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
@@ -92,153 +335,427 @@ const Register = () => {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-        }),
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         toast({ title: 'OTP sent successfully! Please check your email.' });
       } else {
         toast({ title: data.error, variant: 'destructive' });
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'Failed to resend OTP. Please try again.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (step === 'verify') {
-    return (
-      <PublicLayout>
-        <div className="container mx-auto px-4 py-16 max-w-md">
-          <div className="bg-card rounded-xl p-8 border border-border">
-            <h1 className="font-display text-2xl font-bold text-center mb-6">Verify Your Email</h1>
-            <p className="text-center text-muted-foreground mb-6">
-              We've sent a 6-digit OTP to <strong>{form.email}</strong>
-            </p>
+  const inputClass = (field: string) =>
+    `w-full border rounded-xl px-4 py-3 bg-background text-sm transition-all duration-300 outline-none ${
+      focused === field
+        ? 'border-primary ring-2 ring-primary/20 shadow-lg shadow-primary/10'
+        : 'border-border hover:border-primary/40'
+    }`;
 
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
-                  value={otp}
-                  onChange={(value) => setOtp(value)}
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-
-              <button
-                onClick={handleVerifyOTP}
-                disabled={isLoading || otp.length !== 6}
-                className="btn-primary w-full disabled:opacity-50"
-              >
-                {isLoading ? 'Verifying...' : 'Verify OTP'}
-              </button>
-
-              <button
-                onClick={handleResendOTP}
-                disabled={isLoading}
-                className="w-full text-sm text-primary hover:underline disabled:opacity-50"
-              >
-                {isLoading ? 'Sending...' : 'Resend OTP'}
-              </button>
-            </div>
-
-            <p className="text-center text-sm text-muted-foreground mt-4">
-              <button
-                onClick={() => setStep('register')}
-                className="text-primary font-medium hover:underline"
-              >
-                Change Email
-              </button>
-            </p>
-          </div>
-        </div>
-      </PublicLayout>
-    );
-  }
-
-  return (
+  const verifyStep = (
     <PublicLayout>
-      <div className="container mx-auto px-4 py-16 max-w-md">
-        <div className="bg-card rounded-xl p-8 border border-border">
-          <h1 className="font-display text-2xl font-bold text-center mb-6">Register</h1>
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-                className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/30 to-background" />
+        <FloatingOrb style={{ width: 300, height: 300, top: -60, right: -80, background: 'radial-gradient(circle, hsl(var(--primary)/0.15), transparent 70%)' }} />
+        <FloatingOrb style={{ width: 200, height: 200, bottom: 40, left: -60, background: 'radial-gradient(circle, hsl(var(--secondary)/0.12), transparent 70%)', animation: 'float2 7s ease-in-out infinite' }} />
+
+        <style>{`
+          @keyframes float1 { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-18px) rotate(3deg)} }
+          @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(14px)} }
+          @keyframes slideUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+          @keyframes fadeScale { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+          .slide-up { animation: slideUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+          .fade-scale { animation: fadeScale 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+        `}</style>
+
+        <div className="relative z-10 w-full max-w-md fade-scale">
+          {/* Decorative top badge */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-medium tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Verify Your Identity
+            </div>
+          </div>
+
+          <div className="bg-card/80 backdrop-blur-xl border border-border/60 rounded-2xl p-8 shadow-2xl">
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center text-3xl shadow-inner">
+                📧
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-                className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
+            <h1 className="font-display text-2xl font-bold text-center mb-2">Check Your Inbox</h1>
+            <p className="text-center text-muted-foreground text-sm mb-1">
+              We've sent a 6-digit code to
+            </p>
+            <p className="text-center font-medium text-primary text-sm mb-8">{form.email}</p>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-                minLength={6}
-                className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Confirm Password</label>
-              <input
-                type="password"
-                value={form.confirmPassword}
-                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                required
-                className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+            {/* OTP Input */}
+            <div className="flex justify-center mb-6">
+              <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}>
+                <InputOTPGroup>
+                  {[0,1,2,3,4,5].map(i => (
+                    <InputOTPSlot key={i} index={i} />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
             </div>
 
             <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary w-full disabled:opacity-50"
+              onClick={handleVerifyOTP}
+              disabled={isLoading || otp.length !== 6}
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 mb-3 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  Verifying...
+                </span>
+              ) : 'Verify & Continue →'}
             </button>
-          </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Already have an account? <Link href="/login" className="text-primary font-medium">Login</Link>
-          </p>
+            <div className="flex items-center justify-between text-sm">
+              <button onClick={handleResendOTP} disabled={isLoading} className="text-muted-foreground hover:text-primary transition-colors disabled:opacity-50">
+                Resend code
+              </button>
+              <button onClick={() => setStep('register')} className="text-muted-foreground hover:text-primary transition-colors">
+                ← Change email
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </PublicLayout>
   );
+
+  if (step === 'verify') return verifyStep;
+
+  // return (
+  //   <PublicLayout>
+  //     <div className="min-h-screen flex items-center justify-center px-4 py-16 relative overflow-hidden">
+  //       {/* Animated background */}
+  //       <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/20 to-background" />
+        
+  //       {/* Floating orbs */}
+  //       <FloatingOrb style={{ width: 400, height: 400, top: -100, right: -100, background: 'radial-gradient(circle, hsl(var(--primary)/0.12), transparent 70%)', animation: 'float1 9s ease-in-out infinite' }} />
+  //       <FloatingOrb style={{ width: 250, height: 250, bottom: -60, left: -80, background: 'radial-gradient(circle, hsl(var(--secondary)/0.10), transparent 70%)', animation: 'float2 7s ease-in-out infinite' }} />
+  //       <FloatingOrb style={{ width: 180, height: 180, top: '40%', left: '8%', background: 'radial-gradient(circle, hsl(var(--accent)/0.08), transparent 70%)', animation: 'float1 11s ease-in-out infinite 2s' }} />
+
+  //       {/* Decorative saree pattern */}
+  //       <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+  //         backgroundImage: `repeating-linear-gradient(45deg, hsl(var(--primary)) 0px, hsl(var(--primary)) 1px, transparent 1px, transparent 20px)`,
+  //         backgroundSize: '40px 40px'
+  //       }} />
+
+  //       <style>{`
+  //         @keyframes float1 { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-20px) rotate(2deg)} }
+  //         @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(16px)} }
+  //         @keyframes slideUp { from{opacity:0;transform:translateY(36px)} to{opacity:1;transform:translateY(0)} }
+  //         @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+  //         .slide-up-1 { opacity:0; animation: slideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
+  //         .slide-up-2 { opacity:0; animation: slideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards; }
+  //         .slide-up-3 { opacity:0; animation: slideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s forwards; }
+  //         .slide-up-4 { opacity:0; animation: slideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.4s forwards; }
+  //         .slide-up-5 { opacity:0; animation: slideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.5s forwards; }
+  //         .submit-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 24px hsl(var(--primary)/0.35); }
+  //         .submit-btn { transition: all 0.25s ease; }
+  //         .input-group:focus-within label { color: hsl(var(--primary)); }
+  //       `}</style>
+
+  //       <div className="relative z-10 w-full max-w-md">
+  //         {/* Top pill */}
+  //         <div className="flex justify-center mb-8 slide-up-1">
+  //           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-primary/25 bg-primary/5 backdrop-blur-sm text-primary text-xs font-medium tracking-widest uppercase">
+  //             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+  //             Join Our Community
+  //           </div>
+  //         </div>
+
+  //         {/* Heading */}
+  //         <div className="text-center mb-8 slide-up-2">
+  //           <h1 className="font-display text-4xl font-bold mb-2 leading-tight">
+  //             Create Your
+  //             <span className="block" style={{
+  //               background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
+  //               WebkitBackgroundClip: 'text',
+  //               WebkitTextFillColor: 'transparent',
+  //               backgroundClip: 'text'
+  //             }}>Account</span>
+  //           </h1>
+  //           <p className="text-muted-foreground text-sm">Discover the finest handcrafted sarees from India</p>
+  //         </div>
+
+  //         {/* Card */}
+  //         <div className="bg-card/75 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-2xl slide-up-3">
+  //           <form onSubmit={handleRegister} className="space-y-5">
+  //             {/* Name */}
+  //             <div className="input-group space-y-1.5">
+  //               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-colors duration-200">Full Name</label>
+  //               <input
+  //                 type="text"
+  //                 value={form.name}
+  //                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+  //                 onFocus={() => setFocused('name')}
+  //                 onBlur={() => setFocused(null)}
+  //                 required
+  //                 placeholder="Priya Sharma"
+  //                 className={inputClass('name')}
+  //               />
+  //             </div>
+
+  //             {/* Email */}
+  //             <div className="input-group space-y-1.5">
+  //               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-colors duration-200">Email Address</label>
+  //               <input
+  //                 type="email"
+  //                 value={form.email}
+  //                 onChange={(e) => setForm({ ...form, email: e.target.value })}
+  //                 onFocus={() => setFocused('email')}
+  //                 onBlur={() => setFocused(null)}
+  //                 required
+  //                 placeholder="priya@example.com"
+  //                 className={inputClass('email')}
+  //               />
+  //             </div>
+
+  //             {/* Password */}
+  //             <div className="input-group space-y-1.5">
+  //               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-colors duration-200">Password</label>
+  //               <input
+  //                 type="password"
+  //                 value={form.password}
+  //                 onChange={(e) => setForm({ ...form, password: e.target.value })}
+  //                 onFocus={() => setFocused('password')}
+  //                 onBlur={() => setFocused(null)}
+  //                 required
+  //                 minLength={6}
+  //                 placeholder="Min. 6 characters"
+  //                 className={inputClass('password')}
+  //               />
+  //               {/* Password strength indicator */}
+  //               {form.password && (
+  //                 <div className="flex gap-1 mt-1">
+  //                   {[1,2,3,4].map(i => (
+  //                     <div key={i} className="h-1 flex-1 rounded-full transition-all duration-300"
+  //                       style={{ background: form.password.length >= i * 2 ? (form.password.length >= 8 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))') : 'hsl(var(--border))' }} />
+  //                   ))}
+  //                 </div>
+  //               )}
+  //             </div>
+
+  //             {/* Confirm Password */}
+  //             <div className="input-group space-y-1.5">
+  //               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-colors duration-200">Confirm Password</label>
+  //               <input
+  //                 type="password"
+  //                 value={form.confirmPassword}
+  //                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+  //                 onFocus={() => setFocused('confirm')}
+  //                 onBlur={() => setFocused(null)}
+  //                 required
+  //                 placeholder="Re-enter password"
+  //                 className={`${inputClass('confirm')} ${form.confirmPassword && form.confirmPassword !== form.password ? 'border-destructive' : ''}`}
+  //               />
+  //               {form.confirmPassword && form.confirmPassword !== form.password && (
+  //                 <p className="text-destructive text-xs mt-1">Passwords don't match</p>
+  //               )}
+  //             </div>
+
+  //             {/* Submit */}
+  //             <button
+  //               type="submit"
+  //               disabled={isLoading}
+  //               className="submit-btn w-full py-3.5 rounded-xl font-semibold text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+  //               style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(168 60% 22%))', color: 'hsl(var(--primary-foreground))' }}
+  //             >
+  //               {isLoading ? (
+  //                 <span className="flex items-center justify-center gap-2">
+  //                   <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+  //                   Creating account...
+  //                 </span>
+  //               ) : 'Create Account →'}
+  //             </button>
+  //           </form>
+  //         </div>
+
+  //         {/* Footer */}
+  //         <div className="text-center mt-6 slide-up-5">
+  //           <p className="text-sm text-muted-foreground">
+  //             Already a member?{' '}
+  //             <Link href="/login" className="text-primary font-semibold hover:underline underline-offset-4 transition-all">
+  //               Sign in here
+  //             </Link>
+  //           </p>
+  //         </div>
+
+  //         {/* Trust indicators */}
+  //         <div className="flex items-center justify-center gap-6 mt-6 slide-up-5">
+  //           {['🔒 Secure', '✨ Free', '🚚 Fast Delivery'].map((item) => (
+  //             <span key={item} className="text-xs text-muted-foreground/70 flex items-center gap-1">{item}</span>
+  //           ))}
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </PublicLayout>
+  // )
+
+  return (
+  <PublicLayout>
+    <div className="min-h-screen flex relative overflow-hidden">
+      <style>{`
+        @keyframes float1 { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-24px) scale(1.03)} }
+        @keyframes float2 { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(18px) scale(0.97)} }
+        @keyframes float3 { 0%,100%{transform:translateX(0)} 50%{transform:translateX(12px)} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(-40px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes slideInR { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .s1{opacity:0;animation:fadeUp 0.6s ease 0.1s forwards}
+        .s2{opacity:0;animation:fadeUp 0.6s ease 0.2s forwards}
+        .s3{opacity:0;animation:fadeUp 0.6s ease 0.3s forwards}
+        .s4{opacity:0;animation:fadeUp 0.6s ease 0.4s forwards}
+        .s5{opacity:0;animation:fadeUp 0.6s ease 0.5s forwards}
+        .panel-left{opacity:0;animation:slideIn 0.8s cubic-bezier(0.22,1,0.36,1) 0s forwards}
+        .panel-right{opacity:0;animation:slideInR 0.8s cubic-bezier(0.22,1,0.36,1) 0s forwards}
+        .btn-main:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 10px 28px hsl(var(--primary)/0.4)}
+        .btn-main{transition:all 0.25s ease}
+      `}</style>
+
+      {/* LEFT PANEL (SAME AS LOGIN) */}
+      <div className="hidden lg:flex lg:w-5/12 xl:w-1/2 relative panel-left"
+        style={{ background: 'linear-gradient(160deg, hsl(var(--primary)/0.95), hsl(168 60% 18%))' }}>
+
+        <div className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+            backgroundSize: '32px 32px'
+          }}
+        />
+
+        {/* floating shapes */}
+        <div className="absolute" style={{ top: '15%', left: '10%', animation: 'float1 8s ease-in-out infinite' }}>
+          <div className="w-20 h-20 rounded-2xl rotate-12 border-2 border-white/20" />
+        </div>
+
+        <div className="absolute" style={{ top: '55%', right: '12%', animation: 'float2 9s ease-in-out infinite' }}>
+          <div className="w-14 h-14 rounded-full border-2 border-white/20" />
+        </div>
+
+        <div className="absolute" style={{ bottom: '20%', left: '15%', animation: 'float3 7s ease-in-out infinite' }}>
+          <div className="w-10 h-10 rounded-lg rotate-45 border border-white/20" />
+        </div>
+
+        {/* TEXT */}
+        <div className="relative z-10 flex flex-col py-20 px-12 text-white">
+          <div className="flex justify-start gap-2 mb-6">
+            <Image src="/favicon.png" alt="Morpankh Saree" width={200} height={200} />
+          </div>
+          <h2 className="text-4xl font-bold mb-4">
+            Join<br />
+            <span className="text-white/80">Morpankh Saree</span>
+          </h2>
+          <p className="text-white/70 text-sm">
+            Create your account and explore premium sarees.
+          </p>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="flex-1 flex items-center justify-center px-6 py-16 panel-right">
+        <div className="w-full max-w-sm">
+
+          {/* HEADER */}
+          <div className="mb-8 s1">
+            <h1 className="text-3xl font-bold mb-2">
+              Create <span style={{ color: 'hsl(var(--primary))' }}>Account</span>
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Start your journey with us
+            </p>
+          </div>
+
+          {/* FORM */}
+          <form onSubmit={handleRegister} className="space-y-5">
+
+            {/* NAME */}
+            <div className="s2">
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Full Name"
+                className={inputClass('name')}
+                required
+              />
+            </div>
+
+            {/* EMAIL */}
+            <div className="s3">
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="Email"
+                className={inputClass('email')}
+                required
+              />
+            </div>
+
+            {/* PASSWORD */}
+            <div className="s4">
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="Password"
+                className={inputClass('password')}
+                required
+              />
+            </div>
+
+            {/* CONFIRM PASSWORD */}
+            <div className="s5">
+              <input
+                type="password"
+                value={form.confirmPassword}
+                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                placeholder="Confirm Password"
+                className={inputClass('confirm')}
+                required
+              />
+            </div>
+
+            {/* BUTTON */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-main w-full py-3.5 rounded-xl font-semibold text-sm"
+              style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
+            >
+              {isLoading ? 'Creating...' : 'Create Account →'}
+            </button>
+          </form>
+
+          {/* FOOTER */}
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Already have an account?{' '}
+            <Link href="/login" className="font-semibold text-primary">
+              Login
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  </PublicLayout>
+);
 };
 
 export default Register;

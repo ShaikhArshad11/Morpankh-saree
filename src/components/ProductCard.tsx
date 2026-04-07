@@ -87,6 +87,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
               onLoadingComplete={() => setImgLoaded(true)}
               onError={() => {
                 setImageSrc('/placeholder.svg');
+                setImgLoaded(true);
               }}
               className={`object-cover transition-transform duration-500 group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
             />
