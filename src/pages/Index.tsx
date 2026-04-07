@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Star, Plus, Send } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
@@ -191,7 +192,13 @@ const Index = () => {
           <div ref={catScrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-2 px-1">
             {categories.map((cat) => (
               <Link key={cat.id} href={`/products?category=${cat.slug}`} className="group flex-shrink-0 w-[200px] md:w-[220px] relative aspect-[3/4] rounded-xl overflow-hidden card-hover">
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <Image
+                  src={cat.image || '/placeholder.svg'}
+                  alt={cat.name}
+                  fill
+                  sizes="(max-width: 640px) 200px, 220px"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 to-transparent flex items-end p-4">
                   <span className="text-background font-display font-semibold text-sm">{cat.name}</span>
                 </div>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { ShieldCheck, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
-import { ShieldCheck } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
@@ -79,7 +81,7 @@ const AdminLogin = () => {
               <ShieldCheck className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <img src={logo.src} alt="Morpankh" className="h-8 mx-auto mb-2" />
+          <Image src={logo} alt="Morpankh" width={120} height={32} className="h-8 w-auto mx-auto mb-2" priority />
           <h1 className="font-display text-2xl font-bold">Admin Login</h1>
           <p className="text-sm text-muted-foreground mt-1">Access the admin dashboard</p>
         </div>

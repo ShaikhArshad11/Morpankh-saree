@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Trash2, ShoppingCart, Heart } from 'lucide-react';
+import Image from 'next/image';
 import PublicLayout from '@/components/PublicLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
@@ -29,7 +30,15 @@ const Wishlist = () => {
           {wishlistProducts.map((p) => (
             <div key={p.id} className="bg-card rounded-xl overflow-hidden border border-border card-hover">
               <Link href={`/product/${p.slug}`} className="block aspect-[3/4] overflow-hidden">
-                <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={p.images[0] || '/placeholder.svg'}
+                    alt={p.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
+                    className="object-cover"
+                  />
+                </div>
               </Link>
               <div className="p-4">
                 <h3 className="font-medium text-sm truncate">{p.name}</h3>

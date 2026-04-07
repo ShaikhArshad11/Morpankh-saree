@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare, Mail } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
@@ -57,7 +58,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col shrink-0 hidden md:flex">
         <div className="p-4 border-b border-sidebar-border">
           <Link href="/" className="flex items-center gap-2">
-            <img src={logo.src} alt="Logo" className="h-8 brightness-0 invert" />
+            <Image src={logo} alt="Logo" width={120} height={32} className="h-8 w-auto brightness-0 invert" />
             <span className="font-display text-sm font-bold">Admin Panel</span>
           </Link>
         </div>

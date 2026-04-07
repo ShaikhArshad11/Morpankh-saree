@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, X, Upload, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { Category } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -150,7 +151,15 @@ const AdminCategories = () => {
         {categories.map((cat) => (
           <div key={cat.id} className="bg-card rounded-xl border border-border overflow-hidden card-hover">
             <div className="aspect-video overflow-hidden">
-              <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+              <div className="relative w-full h-full">
+                <Image
+                  src={cat.image || '/placeholder.svg'}
+                  alt={cat.name}
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 360px"
+                  className="object-cover"
+                />
+              </div>
             </div>
             <div className="p-4 flex items-center justify-between">
               <div>
@@ -179,7 +188,15 @@ const AdminCategories = () => {
                 <label className="block text-sm font-medium mb-1">Category Image</label>
                 <div className="flex items-center gap-3">
                   {form.image && (
-                    <img src={form.image} alt="Preview" className="w-16 h-12 object-cover rounded border border-border" />
+                    <div className="relative w-16 h-12 overflow-hidden rounded border border-border">
+                      <Image
+                        src={form.image || '/placeholder.svg'}
+                        alt="Preview"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <label className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg text-sm cursor-pointer hover:bg-muted/80 transition-colors">
                     <Upload className="h-4 w-4" /> Upload

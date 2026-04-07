@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShoppingCart, Heart, User, Menu, X, LogOut } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
@@ -27,7 +28,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <Link href="/" className="flex items-center gap-2">
-          <img src={logo.src} alt="Morpankh Saree" className="h-10 w-auto" />
+          <Image src={logo} alt="Morpankh Saree" width={140} height={40} className="h-10 w-auto" priority />
           <span className="font-display text-xl font-bold text-primary hidden sm:block">Morpankh Saree</span>
         </Link>
 

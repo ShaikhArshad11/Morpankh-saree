@@ -2,10 +2,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal, X, Search } from 'lucide-react';
+import useSWR from 'swr';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
 import { Slider } from '@/components/ui/slider';
+import type { Product } from '@/data/mockData';
 import {
   Pagination,
   PaginationContent,
@@ -24,9 +26,33 @@ const highlightFilters = [
   { label: 'Premium', key: 'premium' },
 ];
 
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Failed to load products');
+  }
+  const json = await res.json();
+  if (json?.success && Array.isArray(json.data)) {
+    return json.data;
+  }
+  return [];
+};
+
 const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCategory?: string; initialHighlight?: string }) => {
-  const products = useStore((s) => s.products);
+  const storeProducts = useStore((s) => s.products);
   const categories = useStore((s) => s.categories);
+
+  const {
+    data: apiProducts,
+    error: apiError,
+    isLoading: apiLoading,
+  } = useSWR<Product[]>('/api/products', fetcher, {
+    dedupingInterval: 60_000,
+    revalidateOnFocus: false,
+    fallbackData: storeProducts,
+  });
+
+  const products = apiProducts ?? storeProducts;
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedHighlight, setSelectedHighlight] = useState(initialHighlight);
   const [sortBy, setSortBy] = useState('');
@@ -111,6 +137,12 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
     <PublicLayout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="section-title mb-8">Our Collection</h1>
+
+        {apiError && products.length === 0 && (
+          <div className="mb-6 text-sm text-destructive text-center">
+            Failed to load products. Please try again.
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="relative max-w-lg mx-auto mb-6">
@@ -212,7 +244,22 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
         )}
 
         {/* Grid */}
-        {filtered.length === 0 ? (
+        {apiLoading && products.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {Array.from({ length: 12 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="bg-card rounded-xl overflow-hidden border border-border"
+              >
+                <div className="relative aspect-[3/4] bg-muted animate-pulse" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-muted rounded w-4/5 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-2/5 animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">No products found matching your filters.</div>
         ) : (
           <>

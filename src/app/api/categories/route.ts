@@ -4,12 +4,19 @@ import { MongoClient, Db, WithId, Document } from 'mongodb';
 let client: MongoClient;
 let db: Db;
 
+function getDbNameFromUri(uri: string) {
+  const withoutQuery = uri.split('?')[0];
+  const parts = withoutQuery.split('/');
+  const name = parts.length > 3 ? parts[parts.length - 1] : '';
+  return name.trim() || undefined;
+}
+
 async function getDatabase() {
   if (!client) {
     const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
     client = new MongoClient(uri);
     await client.connect();
-    db = client.db('morpankh_saree');
+    db = client.db(getDbNameFromUri(uri) || 'morpankh_saree');
   }
   return db;
 }

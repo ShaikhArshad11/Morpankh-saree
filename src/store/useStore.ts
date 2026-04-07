@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Product, Category, Order, Customer, Review, initialProducts, initialCategories, initialOrders, initialCustomers, initialReviews } from '@/data/mockData';
+import { Product, Category, Order, Customer, Review, initialOrders, initialCustomers, initialReviews } from '@/data/mockData';
 
 export interface CartItem {
   productId: string;
@@ -43,6 +43,9 @@ interface StoreState {
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
 
+  // Category loading
+  loadCategories: () => Promise<void>;
+
   // Category actions
   addCategory: (category: Category) => void;
   updateCategory: (id: string, category: Partial<Category>) => void;
@@ -80,8 +83,8 @@ interface StoreState {
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      products: initialProducts,
-      categories: initialCategories,
+      products: [],
+      categories: [],
       orders: initialOrders,
       customers: initialCustomers,
       reviews: initialReviews,
@@ -99,6 +102,18 @@ export const useStore = create<StoreState>()(
           const data = await res.json();
           if (res.ok && data?.success && Array.isArray(data.data)) {
             set({ products: data.data });
+          }
+        } catch {
+          // ignore
+        }
+      },
+
+      loadCategories: async () => {
+        try {
+          const res = await fetch('/api/categories');
+          const data = await res.json();
+          if (res.ok && data?.success && Array.isArray(data.data)) {
+            set({ categories: data.data });
           }
         } catch {
           // ignore

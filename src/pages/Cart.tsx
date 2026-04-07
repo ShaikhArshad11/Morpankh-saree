@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
 import PublicLayout from '@/components/PublicLayout';
 import { useStore } from '@/store/useStore';
 
@@ -28,7 +29,15 @@ const Cart = () => {
           <div className="lg:col-span-2 space-y-4">
             {cart.map((item) => (
               <div key={`${item.productId}-${item.color}`} className="bg-card rounded-xl p-4 border border-border flex gap-4">
-                <img src={item.image} alt={item.name} className="w-20 h-24 object-cover rounded-lg" />
+                <div className="relative w-20 h-24 shrink-0 overflow-hidden rounded-lg">
+                  <Image
+                    src={item.image || '/placeholder.svg'}
+                    alt={item.name}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                </div>
                 <div className="flex-1">
                   <h3 className="font-medium">{item.name}</h3>
                   <p className="text-sm text-muted-foreground">Color: {item.color}{item.size ? ` | Size: ${item.size}` : ''}</p>

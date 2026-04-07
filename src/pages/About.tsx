@@ -1,11 +1,12 @@
 import PublicLayout from '@/components/PublicLayout';
+import Image from 'next/image';
 import logo from '@/assets/logo.png';
 
 const About = () => (
   <PublicLayout>
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-3xl mx-auto text-center">
-        <img src={logo.src} alt="Morpankh Saree" className="h-24 mx-auto mb-6" />
+        <Image src={logo} alt="Morpankh Saree" width={240} height={96} className="h-24 w-auto mx-auto mb-6" priority />
         <h1 className="section-title mb-6">About Morpankh Saree</h1>
         <p className="text-muted-foreground leading-relaxed mb-6">
           Morpankh Saree is a celebration of India's rich textile heritage. We bring you the finest collection of handcrafted sarees from across the country — from the opulent Banarasi silks to the regal Paithani weaves of Maharashtra.

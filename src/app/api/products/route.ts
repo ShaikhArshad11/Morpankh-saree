@@ -4,14 +4,28 @@ import { Db, MongoClient, WithId, Document } from 'mongodb';
 let client: MongoClient;
 let db: Db;
 
+function getDbNameFromUri(uri: string) {
+  const withoutQuery = uri.split('?')[0];
+  const parts = withoutQuery.split('/');
+  const name = parts.length > 3 ? parts[parts.length - 1] : '';
+  return name.trim() || undefined;
+}
+
 async function getDatabase() {
   if (!client) {
     const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
     client = new MongoClient(uri);
     await client.connect();
-    db = client.db('morpankh_saree');
+    db = client.db(getDbNameFromUri(uri) || 'morpankh_saree');
   }
   return db;
+}
+
+function withVersion(url: string, version: string) {
+  if (!url) return url;
+  const hasQuery = url.includes('?');
+  const sep = hasQuery ? '&' : '?';
+  return `${url}${sep}v=${encodeURIComponent(version)}`;
 }
 
 function getSlug(name: string): string {
@@ -55,6 +69,13 @@ export async function GET(_request: NextRequest) {
       .toArray();
 
     const products = (raw as WithId<Document>[]).map((p) => {
+      const versionSource = (p.updatedAt ?? p.createdAt ?? p._id) as unknown;
+      const version = String(
+        versionSource instanceof Date
+          ? versionSource.getTime()
+          : versionSource
+      );
+
       const price = toNumber(p.basePrice ?? p.price);
       const comparePrice = toNumber(p.compareAtPrice ?? p.comparePrice, price);
 
@@ -78,6 +99,10 @@ export async function GET(_request: NextRequest) {
         ? ((p.images as unknown[]) as string[])
         : imagesFromVariants;
 
+      const versionedImages = (images.length ? images : ['/placeholder.svg']).map((u) =>
+        u.startsWith('/') ? u : withVersion(u, version)
+      );
+
       const stock = toNumber(p.stock);
       const salePercent = p.salePercent !== undefined ? toNumber(p.salePercent) : undefined;
       const isSale =
@@ -93,7 +118,7 @@ export async function GET(_request: NextRequest) {
         comparePrice,
         description: String(p.description || ''),
         fabric: String(p.fabricType ?? p.fabric ?? ''),
-        images: images.length ? images : ['/placeholder.svg'],
+        images: versionedImages,
         category: String(p.category || ''),
         colors: colorNames,
         stock,
@@ -111,7 +136,16 @@ export async function GET(_request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json(
+      { success: true, data: products },
+      {
+        headers: {
+          // Cache at Vercel CDN for fast repeat access.
+          // 60s fresh, then allow serving stale while revalidating for 10 minutes.
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(

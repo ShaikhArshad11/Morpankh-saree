@@ -3,6 +3,13 @@ import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import Image from 'next/image';
 
 // Database interfaces
 interface ColorVariant {
@@ -393,11 +400,15 @@ const AdminProducts = () => {
               {products.map((p) => (
                 <tr key={p._id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="p-4 flex items-center gap-3">
-                    <img
-                      src={p.colors?.[0]?.images?.[0] || p.images?.[0] || '/placeholder.svg'}
-                      alt={p.name}
-                      className="w-10 h-12 object-cover rounded"
-                    />
+                    <div className="relative w-10 h-12 overflow-hidden rounded shrink-0">
+                      <Image
+                        src={p.colors?.[0]?.images?.[0] || p.images?.[0] || '/placeholder.svg'}
+                        alt={p.name}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    </div>
                     <div>
                       <span className="font-medium">{p.name}</span>
                       {p.hidden && <span className="ml-2 text-xs text-destructive">(Hidden)</span>}
@@ -535,12 +546,15 @@ const AdminProducts = () => {
                           {Array.isArray(color.images) && color.images.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap">
                               {color.images.slice(0, 4).map((img, imgIdx) => (
-                                <img
-                                  key={imgIdx}
-                                  src={img}
-                                  alt={color.colorName}
-                                  className="w-16 h-16 object-cover rounded border border-border"
-                                />
+                                <div key={imgIdx} className="relative w-16 h-16 overflow-hidden rounded border border-border">
+                                  <Image
+                                    src={img || '/placeholder.svg'}
+                                    alt={color.colorName}
+                                    fill
+                                    sizes="64px"
+                                    className="object-cover"
+                                  />
+                                </div>
                               ))}
                             </div>
                           )}

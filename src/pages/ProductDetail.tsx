@@ -211,6 +211,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import {
   Heart,
   ShoppingCart,
@@ -283,41 +284,34 @@ export default function ProductDetailPage() {
   const { addToCart, toggleWishlist, wishlist, products: storeProducts } = useStore();
 
   // ── Local state ──────────────────────────────────────
-  const [product, setProduct] = useState<ProductDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);   // ← core state
   const [isChangingColor, setIsChangingColor] = useState(false);  // animation flag
   const [quantity, setQuantity] = useState(1);
 
+  // ── Fetch product from API ───────────────────────────
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Product not found');
+    return res.json();
+  };
+
+  const {
+    data: product,
+    error,
+    isLoading: loading,
+  } = useSWR<ProductDetail>(slug ? `/api/products/${slug}` : null, fetcher, {
+    dedupingInterval: 60_000,
+    revalidateOnFocus: false,
+  });
+
   const isWished = product ? wishlist.includes(product._id) : false;
 
-  // ── Fetch product from API ───────────────────────────
   useEffect(() => {
-    if (!slug) return;
-
-    const fetchProduct = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/products/${slug}`);
-        if (!res.ok) throw new Error('Product not found');
-        const data: ProductDetail = await res.json();
-
-        // Auto-select first in-stock color
-        const firstAvailable = data.colors.findIndex((c) => !c.isOutOfStock);
-        setSelectedColorIdx(firstAvailable >= 0 ? firstAvailable : 0);
-        setProduct(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load product');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [slug]);
+    if (!product) return;
+    const firstAvailable = product.colors.findIndex((c) => !c.isOutOfStock);
+    setSelectedColorIdx(firstAvailable >= 0 ? firstAvailable : 0);
+    setQuantity(1);
+  }, [product]);
 
   // ── Color switch handler ─────────────────────────────
   const handleColorChange = useCallback((idx: number) => {
@@ -393,7 +387,7 @@ export default function ProductDetailPage() {
       <PublicLayout>
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="font-display text-2xl font-bold mb-4">Product not found</h1>
-          <p className="text-muted-foreground mb-6">{error || 'This product does not exist.'}</p>
+          <p className="text-muted-foreground mb-6">{error instanceof Error ? error.message : (error ? String(error) : 'This product does not exist.')}</p>
           <Link href="/products" className="btn-primary inline-block">Browse Products</Link>
         </div>
       </PublicLayout>
