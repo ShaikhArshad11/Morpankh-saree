@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';

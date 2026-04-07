@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';

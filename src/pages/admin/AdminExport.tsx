@@ -1,3 +1,5 @@
+"use client";
+
 import { Download } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { toast } from '@/hooks/use-toast';

@@ -1,3 +1,5 @@
+"use client";
+
 import { Plus, Minus } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';

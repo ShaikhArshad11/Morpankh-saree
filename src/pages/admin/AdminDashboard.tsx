@@ -1,3 +1,5 @@
+"use client";
+
 import { Package, ShoppingCart, Users, DollarSign, TrendingUp, AlertTriangle, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import AdminLayout from '@/components/AdminLayout';

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { User, Edit3, Mail, Phone, MapPin, CheckCircle, XCircle, ZoomIn, ZoomOut, Move } from 'lucide-react';
+import { User, Edit3, Mail, Phone, MapPin, CheckCircle, XCircle } from 'lucide-react';
 
 import PublicLayout from '@/components/PublicLayout';
 
@@ -34,10 +34,6 @@ const ProfilePage = () => {
     token: s.token 
   }));
   const [isEditing, setIsEditing] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof UserProfile, string>>>({});
@@ -72,31 +68,7 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.1, 2));
-  };
 
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,42 +191,9 @@ const ProfilePage = () => {
   return (
     <PublicLayout>
       <div className="container mx-auto py-16 px-4 min-h-screen">
-        {/* Zoom Controls */}
-        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
-          <Button
-            size="icon"
-            onClick={handleZoomIn}
-            className="rounded-full shadow-lg bg-peacock-teal hover:bg-peacock-teal/90"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            onClick={handleZoomOut}
-            className="rounded-full shadow-lg bg-peacock-teal hover:bg-peacock-teal/90"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            className={`rounded-full shadow-lg ${isDragging ? 'bg-saffron' : 'bg-royal-purple hover:bg-royal-purple/90'}`}
-          >
-            <Move className="h-4 w-4" />
-          </Button>
-        </div>
 
         {/* Main Profile Container */}
-        <div
-          className="transition-all duration-300 ease-out cursor-move"
-          style={{
-            transform: `scale(${zoomLevel}) translate(${position.x}px, ${position.y}px)`,
-            transformOrigin: 'center'
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
+        <div className="transition-all duration-300 ease-out">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="text-center mb-8 animate-fade-in">

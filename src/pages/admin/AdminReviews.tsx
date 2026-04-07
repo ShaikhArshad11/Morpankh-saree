@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import { Check, Trash2, Star } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
