@@ -87,6 +87,7 @@ export async function GET(
       basePrice: base,
       compareAtPrice: compare,
       discountPercent,
+      salePercent: product.salePercent,
       shortDescription: product.shortDescription,
       description: product.description,
       fabricType: product.fabricType ?? product.fabric,

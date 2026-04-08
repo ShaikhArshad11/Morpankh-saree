@@ -5,6 +5,7 @@ import { ShoppingCart, Heart, User, Menu, X, LogOut } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
 import Image from 'next/image';
+import { toast } from '@/hooks/use-toast';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -98,7 +99,14 @@ const Navbar = () => {
                       {isAdmin && (
                         <Link href="/admin" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm hover:bg-muted transition-colors">Admin Panel</Link>
                       )}
-                      <button onClick={() => { logout(); setUserMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          logout();
+                          toast({ title: 'Logged out successfully' });
+                          setUserMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors flex items-center gap-2"
+                      >
                         <LogOut className="h-3.5 w-3.5" /> Logout
                       </button>
                     </>

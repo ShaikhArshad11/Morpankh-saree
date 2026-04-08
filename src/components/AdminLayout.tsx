@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare, Mail } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
+import { toast } from '@/hooks/use-toast';
 
 const menuItems = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
@@ -68,7 +69,11 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
               return (
                 <button
                   key={item.to}
-                  onClick={() => { logout(); router.push('/'); }}
+                  onClick={() => {
+                    logout();
+                    toast({ title: 'Logged out successfully' });
+                    router.push('/');
+                  }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-left text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-destructive`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -97,7 +102,14 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
               <p className="text-xs text-sidebar-foreground/50">Administrator</p>
             </div>
           </div>
-          <button onClick={() => { logout(); router.push('/'); }} className="flex items-center gap-2 text-sm text-sidebar-foreground/50 hover:text-destructive transition-colors w-full">
+          <button
+            onClick={() => {
+              logout();
+              toast({ title: 'Logged out successfully' });
+              router.push('/');
+            }}
+            className="flex items-center gap-2 text-sm text-sidebar-foreground/50 hover:text-destructive transition-colors w-full"
+          >
             <LogOut className="h-4 w-4" /> Logout
           </button>
         </div>
@@ -112,7 +124,11 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
               return (
                 <button
                   key={item.to}
-                  onClick={() => { logout(); router.push('/'); }}
+                  onClick={() => {
+                    logout();
+                    toast({ title: 'Logged out successfully' });
+                    router.push('/');
+                  }}
                   className={`p-2 rounded-lg relative text-sidebar-foreground/50 hover:text-destructive`}
                 >
                   <item.icon className="h-4 w-4" />

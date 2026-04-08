@@ -13,7 +13,7 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, toggleWishlist, wishlist } = useStore();
   const isWished = wishlist.includes(product.id);
-  const discount = product.salePercent || Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100);
+  const discount = product.salePercent ? Number(product.salePercent) : 0;
 
   const [imageSrc, setImageSrc] = useState(product.images[0] || '/placeholder.svg');
 

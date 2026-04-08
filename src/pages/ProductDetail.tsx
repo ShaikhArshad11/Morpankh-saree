@@ -230,6 +230,7 @@ import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
+import { Product } from '@/data/mockData';
 
 // ── Sub-components (paste from their own files or inline) ──
 // import ProductGallery from './ProductGallery';
@@ -257,7 +258,7 @@ interface ProductDetail {
   category: string;
   basePrice: number;
   compareAtPrice?: number;
-  discountPercent?: number;
+  salePercent?: number;
   shortDescription?: string;
   description?: string;
   fabricType?: string;
@@ -286,6 +287,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);   // ← core state
   const [isChangingColor, setIsChangingColor] = useState(false);  // animation flag
@@ -318,6 +320,39 @@ export default function ProductDetailPage() {
 
     fetchProduct();
   }, [slug]);
+
+  // ── Related products (match Products page data) ───────
+  useEffect(() => {
+    if (!product?.category || !product?._id) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        const list: Product[] = res.ok && data?.success && Array.isArray(data.data) ? data.data : [];
+
+        const fallback = Array.isArray(storeProducts) ? storeProducts : [];
+        const source = list.length ? list : fallback;
+
+        const rel = source
+          .filter((p) => !p.hidden && p.category === product.category && p.id !== product._id)
+          .slice(0, 4);
+
+        if (!cancelled) setRelatedProducts(rel);
+      } catch {
+        const rel = (Array.isArray(storeProducts) ? storeProducts : [])
+          .filter((p) => !p.hidden && p.category === product.category && p.id !== product._id)
+          .slice(0, 4);
+
+        if (!cancelled) setRelatedProducts(rel);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.category, product?._id, storeProducts]);
 
   // ── Color switch handler ─────────────────────────────
   const handleColorChange = useCallback((idx: number) => {
@@ -357,11 +392,6 @@ export default function ProductDetailPage() {
     handleAddToCart();
     router.push('/checkout');
   };
-
-  // ── Related products from store ──────────────────────
-  const relatedProducts = storeProducts
-    .filter((p) => !p.hidden && p.category === product?.category && p.id !== product?._id)
-    .slice(0, 4);
 
   // ── Loading skeleton ─────────────────────────────────
   if (loading) {
@@ -438,9 +468,9 @@ export default function ProductDetailPage() {
             {/* Title & SKU */}
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                {product.isSale && product.discountPercent && (
+                {product.isSale && product.salePercent && (
                   <span className="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded">
-                    {product.discountPercent}% OFF
+                    {product.salePercent}% OFF
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground">SKU: {product.sku}</span>

@@ -36,7 +36,6 @@ interface DbProduct {
   rating?: number;
   reviews?: number;
   sareeLength?: string;
-  blouseIncluded?: boolean;
 }
 
 interface DbCategory {
@@ -73,7 +72,6 @@ type ProductForm = {
   rating: number;
   reviews: number;
   sareeLength: string;
-  blouseIncluded: boolean;
 };
 
 const AdminProducts = () => {
@@ -92,7 +90,6 @@ const AdminProducts = () => {
     tags: [], featured: false, isNew: false, isPremium: false,
     isTrending: false, rating: 0, reviews: 0,
     sareeLength: '',
-    blouseIncluded: false,
   });
 
   const totalStock = form.colors.reduce((sum, color) => sum + Number(color.stock || 0), 0);
@@ -142,7 +139,6 @@ const AdminProducts = () => {
       tags: [], featured: false, isNew: false, isPremium: false,
       isTrending: false, rating: 0, reviews: 0,
       sareeLength: '',
-      blouseIncluded: false,
     });
     setModalOpen(true);
   };
@@ -173,7 +169,6 @@ const AdminProducts = () => {
       rating: p.rating || 0,
       reviews: p.reviews || 0,
       sareeLength: p.sareeLength || '',
-      blouseIncluded: p.blouseIncluded || false,
     });
     setModalOpen(true);
   };
@@ -238,7 +233,6 @@ const AdminProducts = () => {
       rating: form.rating,
       reviews: form.reviews,
       sareeLength: form.sareeLength,
-      blouseIncluded: form.blouseIncluded,
     };
     
     try {
@@ -490,6 +484,17 @@ const AdminProducts = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">Offer Percent (%)</label>
+                <input
+                  type="number"
+                  value={form.salePercent}
+                  onChange={(e) => setForm({ ...form, salePercent: e.target.value })}
+                  className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="30"
+                />
+              </div>
+
               {/* Colors with Image Uploads */}
               <div>
                 <label className="block text-sm font-medium mb-2">Colors</label>
@@ -591,17 +596,6 @@ const AdminProducts = () => {
                     className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="e.g. 5.5"
                   />
-                </div>
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium">
-                    <input
-                      type="checkbox"
-                      checked={form.blouseIncluded}
-                      onChange={(e) => setForm({ ...form, blouseIncluded: e.target.checked })}
-                      className="rounded"
-                    />
-                    Blouse Included
-                  </label>
                 </div>
               </div>
 

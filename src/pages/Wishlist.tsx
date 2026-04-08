@@ -34,8 +34,14 @@ const Wishlist = () => {
               <div className="p-4">
                 <h3 className="font-medium text-sm truncate">{p.name}</h3>
                 <p className="text-primary font-bold mt-1">₹{p.price.toLocaleString()}</p>
+                {p.comparePrice > p.price && (
+                  <p className="text-muted-foreground text-xs line-through">₹{p.comparePrice.toLocaleString()}</p>
+                )}
                 <div className="flex gap-2 mt-3">
-                  <button onClick={() => { addToCart({ productId: p.id, name: p.name, image: p.images[0], price: p.price, color: p.colors[0], quantity: 1 }); toast({ title: 'Added to cart' }); }} className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 hover:opacity-90 transition-opacity">
+                  <button onClick={() => {
+                    addToCart({ productId: p.id, name: p.name, image: p.images[0], price: p.price, color: p.colors[0], quantity: 1 });
+                    toast({ title: 'Added to cart' });
+                  }} className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 hover:opacity-90 transition-opacity">
                     <ShoppingCart className="h-3 w-3" /> Add to Cart
                   </button>
                   <button onClick={() => { toggleWishlist(p.id); toast({ title: 'Removed from wishlist' }); }} className="p-2 border border-destructive text-destructive rounded-lg hover:bg-destructive/10 transition-colors">

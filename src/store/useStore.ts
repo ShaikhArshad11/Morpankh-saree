@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Product, Category, Order, Customer, Review, initialProducts, initialCategories, initialOrders, initialCustomers, initialReviews } from '@/data/mockData';
+import { Product, Category, Order, Customer, Review, initialCategories, initialOrders, initialCustomers, initialReviews } from '@/data/mockData';
 
 export interface CartItem {
   productId: string;
@@ -80,7 +80,7 @@ interface StoreState {
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      products: initialProducts,
+      products: [],
       categories: initialCategories,
       orders: initialOrders,
       customers: initialCustomers,
