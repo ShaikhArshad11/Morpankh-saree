@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
+import nodemailer from 'nodemailer';
 
 export const runtime = 'nodejs';
 
@@ -98,6 +99,151 @@ function normalizeOrderItem(raw: unknown): OrderItem | null {
     quantity,
     price,
   };
+}
+
+async function sendInvoiceEmail(order: OrderDoc): Promise<boolean> {
+  try {
+    console.log('📧 Attempting to send invoice email to:', order.customerEmail);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT || '465'),
+      secure: process.env.EMAIL_USE_SSL === 'true',
+      auth: {
+        user: process.env.EMAIL_HOST_USER,
+        pass: process.env.EMAIL_HOST_PASSWORD,
+      },
+      logger: true,
+      debug: true,
+    });
+
+    // Verify SMTP Connection
+    await transporter.verify();
+    console.log('✓ SMTP connection verified successfully');
+
+    const itemsHtml = order.items
+      .map(
+        (item) => `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.color}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.size || 'N/A'}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${item.price.toLocaleString()}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${(item.price * item.quantity).toLocaleString()}</td>
+        </tr>
+      `
+      )
+      .join('');
+
+    const mailOptions = {
+      from: `"Morpankh Saree" <${process.env.EMAIL_HOST_USER}>`,
+      to: order.customerEmail,
+      subject: `Order Confirmation - ${order.orderNumber} | Morpankh Saree`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+          <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #dbeafe; padding-bottom: 20px;">
+              <h1 style="margin: 0; color: #1f2937; font-size: 28px;">Morpankh Saree</h1>
+              <p style="margin: 5px 0 0; color: #6b7280; font-size: 14px;">Celebrating Indian Tradition</p>
+            </div>
+
+            <!-- Order Status -->
+            <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+              <h2 style="margin: 0 0 8px; color: #059669; font-size: 18px;">✓ Order Confirmed!</h2>
+              <p style="margin: 0; color: #047857;">Thank you for your purchase. Your order has been successfully placed.</p>
+            </div>
+
+            <!-- Order Details -->
+            <div style="margin-bottom: 25px;">
+              <h3 style="margin: 0 0 15px; color: #1f2937; font-size: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Order Information</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: bold; width: 50%;">Order Number:</td>
+                  <td style="padding: 8px 0; color: #1f2937; font-weight: bold;">${order.orderNumber}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Order Date:</td>
+                  <td style="padding: 8px 0; color: #1f2937;">${order.date}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Status:</td>
+                  <td style="padding: 8px 0; color: #10b981; font-weight: bold;">Confirmed</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Customer Details -->
+            <div style="margin-bottom: 25px;">
+              <h3 style="margin: 0 0 15px; color: #1f2937; font-size: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Delivery Address</h3>
+              <p style="margin: 0; color: #1f2937; font-weight: bold;">${order.customerName}</p>
+              <p style="margin: 5px 0; color: #4b5563;">${order.address}</p>
+              <p style="margin: 5px 0; color: #4b5563;">${order.city}, ${order.state} ${order.pincode}</p>
+              <p style="margin: 5px 0; color: #4b5563;">Phone: ${order.customerPhone}</p>
+            </div>
+
+            <!-- Order Items -->
+            <div style="margin-bottom: 25px;">
+              <h3 style="margin: 0 0 15px; color: #1f2937; font-size: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Order Items</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background-color: #f3f4f6;">
+                    <th style="padding: 12px; text-align: left; font-weight: bold; color: #374151;">Product</th>
+                    <th style="padding: 12px; text-align: center; font-weight: bold; color: #374151;">Color</th>
+                    <th style="padding: 12px; text-align: center; font-weight: bold; color: #374151;">Size</th>
+                    <th style="padding: 12px; text-align: center; font-weight: bold; color: #374151;">Qty</th>
+                    <th style="padding: 12px; text-align: right; font-weight: bold; color: #374151;">Price</th>
+                    <th style="padding: 12px; text-align: right; font-weight: bold; color: #374151;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Order Summary -->
+            <div style="background-color: #f9fafb; padding: 20px; border-radius: 4px; margin-bottom: 25px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 10px 0; color: #6b7280; text-align: right;">Subtotal:</td>
+                  <td style="padding: 10px 15px; text-align: right; color: #1f2937;">₹${order.subtotal.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #1f2937; font-weight: bold; font-size: 18px; text-align: right;">Total Amount:</td>
+                  <td style="padding: 10px 15px; background-color: #dbeafe; color: #1e40af; font-weight: bold; font-size: 18px; text-align: right; border-radius: 4px;">₹${order.total.toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Next Steps -->
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+              <h4 style="margin: 0 0 8px; color: #92400e; font-weight: bold;">What's Next?</h4>
+              <p style="margin: 0; color: #78350f; font-size: 14px;">Your order will be processed shortly. You will receive a shipping confirmation email with tracking details once your order is dispatched.</p>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px;">Thank you for shopping with Morpankh Saree!</p>
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                This is an automated email. Please do not reply. For any queries, contact us at support@morpankh.com
+              </p>
+            </div>
+
+          </div>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✓ Invoice email sent successfully:', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('✗ Failed to send invoice email:', error);
+    return false;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -237,6 +383,13 @@ export async function POST(request: NextRequest) {
     const orders = db.collection<OrderDoc>('orders');
 
     const result = await orders.insertOne(doc);
+
+    // Send invoice email asynchronously (don't wait for it to complete response)
+    const completeOrder = {
+      ...doc,
+      _id: result.insertedId,
+    };
+    sendInvoiceEmail(completeOrder).catch(err => console.error('Email sending error:', err));
 
     return NextResponse.json({
       success: true,
