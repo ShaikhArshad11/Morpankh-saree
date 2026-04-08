@@ -1,9 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Send, Clock, Star } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import { toast } from '@/hooks/use-toast';
+
+function useScrollReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).classList.add('revealed');
+            observer.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.12 }
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
 
 const Contact = () => {
   const [form, setForm] = useState({ name: '', email: '', message: '' });

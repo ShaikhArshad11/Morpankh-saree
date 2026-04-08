@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import Link from 'next/link';
 import { Trash2, ShoppingCart, Heart } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
@@ -128,42 +127,54 @@ const Wishlist = () => {
                     <div className="absolute top-2 right-2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
                       <Heart className="w-5 h-5 text-red-500 fill-current" />
                     </div>
-                  </Link>
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm truncate mb-2">{p.name}</h3>
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="font-bold text-lg" style={{ color: 'hsl(var(--primary))' }}>₹{p.price.toLocaleString()}</p>
-                      {p.comparePrice > p.price && (
-                        <p className="text-muted-foreground text-xs line-through">₹{p.comparePrice.toLocaleString()}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => {
-                          addToCart({ productId: p.id, name: p.name, image: p.images[0], price: p.price, color: p.colors[0], quantity: 1 });
-                          toast({ title: 'Added to cart' });
-                        }} 
-                        className="flex-1 px-3 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-medium flex items-center justify-center gap-1 hover:bg-primary/90 transition-all hover:scale-105"
-                      >
-                        <ShoppingCart className="h-3 w-3" /> Add to Cart
-                      </button>
-                      <button 
-                        onClick={() => { 
-                          toggleWishlist(p.id); 
-                          toast({ title: 'Removed from wishlist' }); 
-                        }} 
-                        className="p-2 border border-destructive text-destructive rounded-xl hover:bg-destructive/10 transition-all hover:scale-105"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                  </div>
+                </Link>
+
+                <div className="p-4">
+                  <h3 className="font-medium text-sm truncate mb-2">{product.name}</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-bold text-lg" style={{ color: 'hsl(var(--primary))' }}>
+                      ₹{product.price.toLocaleString()}
+                    </p>
+                    {product.comparePrice > product.price && (
+                      <p className="text-muted-foreground text-xs line-through">
+                        ₹{product.comparePrice.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        addToCart({
+                          productId: product.id,
+                          name: product.name,
+                          image: product.images[0],
+                          price: product.price,
+                          color: product.colors[0],
+                          quantity: 1,
+                        });
+                        toast({ title: 'Added to cart' });
+                      }}
+                      className="flex-1 px-3 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-medium flex items-center justify-center gap-1 hover:bg-primary/90 transition-all hover:scale-105"
+                    >
+                      <ShoppingCart className="h-3 w-3" /> Add to Cart
+                    </button>
+                    <button
+                      onClick={() => {
+                        toggleWishlist(product.id);
+                        toast({ title: 'Removed from wishlist' });
+                      }}
+                      className="p-2 border border-destructive text-destructive rounded-xl hover:bg-destructive/10 transition-all hover:scale-105"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
             </div>
           </div>
         </div>
-      </div>
     </PublicLayout>
   );
 };
