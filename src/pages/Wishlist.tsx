@@ -39,7 +39,7 @@ const Wishlist = () => {
                 )}
                 <div className="flex gap-2 mt-3">
                   <button onClick={() => {
-                    addToCart({ productId: p.id, name: p.name, image: p.images[0], price: p.price, color: p.colors[0], quantity: 1 });
+                    addToCart({ productId: p.id, name: p.name, image: p.images[0], price: p.price, comparePrice: p.comparePrice, color: p.colors[0], quantity: 1 });
                     toast({ title: 'Added to cart' });
                   }} className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 hover:opacity-90 transition-opacity">
                     <ShoppingCart className="h-3 w-3" /> Add to Cart

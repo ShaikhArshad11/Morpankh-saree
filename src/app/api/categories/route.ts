@@ -21,6 +21,21 @@ export async function GET(request: NextRequest) {
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
+
+    const productCounts = await database
+      .collection('products')
+      .aggregate([
+        { $match: { hidden: { $ne: true } } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+      ])
+      .toArray();
+
+    const countBySlug = new Map<string, number>();
+    for (const row of productCounts as Array<{ _id?: unknown; count?: unknown }>) {
+      const slug = typeof row?._id === 'string' ? row._id : '';
+      const count = typeof row?.count === 'number' ? row.count : 0;
+      if (slug) countBySlug.set(slug, count);
+    }
     
     // Transform the data to match the expected format
     const transformedCategories = categories.map((cat: WithId<Document>) => ({
@@ -28,7 +43,7 @@ export async function GET(request: NextRequest) {
       name: cat.name as string,
       slug: cat.slug as string,
       image: cat.image as string,
-      productCount: (cat.productCount as number) || 0,
+      productCount: countBySlug.get((cat.slug as string) || '') || 0,
     }));
     
     return NextResponse.json({ 

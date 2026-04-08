@@ -13,7 +13,10 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, toggleWishlist, wishlist } = useStore();
   const isWished = wishlist.includes(product.id);
-  const discount = product.salePercent ? Number(product.salePercent) : 0;
+  const discount =
+    product.comparePrice && product.comparePrice > product.price
+      ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
+      : 0;
 
   const [imageSrc, setImageSrc] = useState(product.images[0] || '/placeholder.svg');
 
@@ -57,6 +60,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       name: product.name,
       image: product.images[0],
       price: product.price,
+      comparePrice: product.comparePrice,
       color: product.colors[0],
       quantity: 1,
     });

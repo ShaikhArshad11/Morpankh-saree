@@ -24,7 +24,6 @@ interface DbProduct {
   colors: ColorVariant[];
   description: string;
   fabric: string;
-  salePercent?: number;
   hidden?: boolean;
   images?: string[];
   sku?: string;
@@ -62,7 +61,6 @@ type ProductForm = {
 
   description: string;
   fabric: string;
-  salePercent: string;
   hidden: boolean;
   tags: string[];
   featured: boolean;
@@ -86,7 +84,7 @@ const AdminProducts = () => {
     name: '', 
     sku: '', 
     originalPrice: '', salePrice: '', category: '', stock: '', colors: [],
-    description: '', fabric: '', salePercent: '', hidden: false,
+    description: '', fabric: '', hidden: false,
     tags: [], featured: false, isNew: false, isPremium: false,
     isTrending: false, rating: 0, reviews: 0,
     sareeLength: '',
@@ -129,38 +127,38 @@ const AdminProducts = () => {
     fetchData();
   }, []);
 
-  const openAdd = () => {
+  const openAddModal = () => {
     setEditing(null);
-    setForm({ 
+    setModalOpen(true);
+    setForm({
       name: '', 
       sku: '', 
       originalPrice: '', salePrice: '', category: categories[0]?.slug || '', stock: '', colors: [],
-      description: '', fabric: '', salePercent: '', hidden: false,
+      description: '', fabric: '', hidden: false,
       tags: [], featured: false, isNew: false, isPremium: false,
       isTrending: false, rating: 0, reviews: 0,
       sareeLength: '',
     });
-    setModalOpen(true);
   };
 
-  const openEdit = (p: DbProduct) => {
+  const openEditModal = (p: DbProduct) => {
     setEditing(p);
+    setModalOpen(true);
     setForm({
-      name: p.name, 
+      name: p.name,
       sku: p.sku || '',
-      originalPrice: p.comparePrice.toString(), 
-      salePrice: p.price.toString(),
-      category: p.category, 
-      stock: p.stock.toString(), 
-      colors: (p.colors || []).map((c) => ({
+      originalPrice: p.comparePrice?.toString() || '',
+      salePrice: p.price?.toString() || '',
+      category: p.category,
+      stock: p.stock?.toString() || '',
+      colors: (Array.isArray(p.colors) ? p.colors : []).map((c) => ({
         colorName: c.colorName,
-        stock: c.stock.toString(),
-        images: c.images || [],
+        stock: c.stock?.toString() || '',
+        images: Array.isArray(c.images) ? c.images : [],
       })),
-      description: p.description, 
+      description: p.description,
       fabric: p.fabric,
-      salePercent: p.salePercent?.toString() || '', 
-      hidden: p.hidden || false, 
+      hidden: p.hidden || false,
       tags: p.tags || [],
       featured: p.featured || false,
       isNew: p.isNew || false,
@@ -207,7 +205,6 @@ const AdminProducts = () => {
 
   const handleSave = async () => {
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
-    const salePercent = form.salePercent ? Number(form.salePercent) : undefined;
     const data: Partial<DbProduct> = {
       name: form.name, 
       slug, 
@@ -223,7 +220,6 @@ const AdminProducts = () => {
       description: form.description, 
       fabric: form.fabric, 
       hidden: form.hidden, 
-      salePercent,
       sku: form.sku,
       tags: form.tags,
       featured: form.featured,
@@ -367,7 +363,7 @@ const AdminProducts = () => {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold">Products</h1>
-        <button onClick={openAdd} className="btn-primary flex items-center gap-2 text-sm py-2"><Plus className="h-4 w-4" /> Add Product</button>
+        <button onClick={openAddModal} className="btn-primary flex items-center gap-2 text-sm py-2"><Plus className="h-4 w-4" /> Add Product</button>
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-x-auto">
@@ -381,7 +377,7 @@ const AdminProducts = () => {
               <tr>
                 <th className="text-left p-4">Product</th>
                 <th className="text-left p-4">Price</th>
-                <th className="text-left p-4">Sale%</th>
+                <th className="text-left p-4">Offer%</th>
                 <th className="text-left p-4">Stock</th>
                 <th className="text-left p-4">Status</th>
                 <th className="text-right p-4">Actions</th>
@@ -402,7 +398,7 @@ const AdminProducts = () => {
                     </div>
                   </td>
                   <td className="p-4">₹{p.price.toLocaleString()}</td>
-                  <td className="p-4">{p.salePercent ? `${p.salePercent}%` : '—'}</td>
+                  <td className="p-4">{p.comparePrice > p.price ? `${Math.round(((p.comparePrice - p.price) / p.comparePrice) * 100)}%` : '—'}</td>
                   <td className="p-4">{p.stock}</td>
                   <td className="p-4">
                     <span className={`text-xs px-2 py-1 rounded-full ${p.stock > 10 ? 'bg-primary/20 text-primary' : p.stock > 0 ? 'bg-gold/20 text-gold' : 'bg-destructive/20 text-destructive'}`}>
@@ -413,7 +409,7 @@ const AdminProducts = () => {
                     <button onClick={() => toggleHidden(p)} className="p-2 hover:bg-muted rounded-lg transition-colors" title={p.hidden ? 'Show' : 'Hide'}>
                       {p.hidden ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                     </button>
-                    <button onClick={() => openEdit(p)} className="p-2 hover:bg-muted rounded-lg transition-colors">
+                    <button onClick={() => openEditModal(p)} className="p-2 hover:bg-muted rounded-lg transition-colors">
                       <Pencil className="h-4 w-4 text-primary" />
                     </button>
                     <button onClick={() => setConfirmDelete(p._id || '')} className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -482,17 +478,6 @@ const AdminProducts = () => {
                     placeholder="1999"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Offer Percent (%)</label>
-                <input
-                  type="number"
-                  value={form.salePercent}
-                  onChange={(e) => setForm({ ...form, salePercent: e.target.value })}
-                  className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="30"
-                />
               </div>
 
               {/* Colors with Image Uploads */}

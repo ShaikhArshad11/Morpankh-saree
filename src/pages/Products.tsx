@@ -5,16 +5,8 @@ import { SlidersHorizontal, X, Search } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
+import { Category } from '@/data/mockData';
 import { Slider } from '@/components/ui/slider';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
 
 const highlightFilters = [
   { label: 'Best Seller', key: 'featured' },
@@ -26,7 +18,8 @@ const highlightFilters = [
 
 const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCategory?: string; initialHighlight?: string }) => {
   const products = useStore((s) => s.products);
-  const categories = useStore((s) => s.categories);
+  const storeCategories = useStore((s) => s.categories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedHighlight, setSelectedHighlight] = useState(initialHighlight);
   const [sortBy, setSortBy] = useState('');
@@ -76,6 +69,24 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
   }, [selectedCategory, selectedHighlight, sortBy, searchQuery, priceRange]);
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        const result = await response.json();
+        if (response.ok && result?.success && Array.isArray(result.data)) {
+          setCategories(result.data as Category[]);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      setCategories(Array.isArray(storeCategories) ? (storeCategories as unknown as Category[]) : []);
+    };
+
+    fetchCategories();
+  }, [storeCategories]);
+
+  useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
@@ -112,69 +123,100 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
       <div className="container mx-auto px-4 py-8">
         <h1 className="section-title mb-8">Our Collection</h1>
 
-        {/* Search Bar */}
-        <div className="relative max-w-lg mx-auto mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sarees by name..."
-            className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
+        <div className="flex gap-8">
+          <aside className="hidden md:block w-72 shrink-0">
+            <div className="bg-card border border-border rounded-xl p-5 sticky top-24">
+              <div className="mb-6">
+                <div className="text-sm font-semibold mb-3">Price Range</div>
+                <div className="px-1">
+                  <Slider
+                    min={0}
+                    max={maxPrice}
+                    step={500}
+                    value={priceRange}
+                    onValueChange={(val) => setPriceRange(val as [number, number])}
+                  />
+                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                    <span>₹{priceRange[0].toLocaleString()}</span>
+                    <span>₹{priceRange[1].toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
 
-        {/* Highlight Filters */}
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-6">
-          {highlightFilters.map((f) => (
-            <button key={f.key} onClick={() => setSelectedHighlight(selectedHighlight === f.key ? '' : f.key)} className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors border ${selectedHighlight === f.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:border-primary'}`}>
-              {f.label}
-            </button>
-          ))}
-        </div>
+              <div className="mb-6">
+                <div className="text-sm font-semibold mb-3">Category</div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setSelectedCategory('')}
+                    className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${!selectedCategory ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                  >
+                    All
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.slug)}
+                      className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.slug ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        {/* Filters bar */}
-        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-          <button onClick={() => setFilterOpen(!filterOpen)} className="md:hidden btn-outline-primary flex items-center gap-2 text-sm py-2 px-4">
-            <SlidersHorizontal className="h-4 w-4" /> Filters
-          </button>
-          <div className="hidden md:flex items-center gap-2 flex-wrap">
-            <button onClick={() => setSelectedCategory('')} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${!selectedCategory ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
-              All
-            </button>
-            {categories.map((cat) => (
-              <button key={cat.id} onClick={() => setSelectedCategory(cat.slug)} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat.slug ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
-                {cat.name}
+              <div className="mb-6">
+                <div className="text-sm font-semibold mb-3">Highlight</div>
+                <div className="space-y-2">
+                  {highlightFilters.map((f) => (
+                    <button
+                      key={f.key}
+                      onClick={() => setSelectedHighlight(selectedHighlight === f.key ? '' : f.key)}
+                      className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedHighlight === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="text-xs text-destructive hover:underline">
+                  Clear All
+                </button>
+              )}
+            </div>
+          </aside>
+
+          <div className="flex-1 min-w-0">
+            {/* Search Bar */}
+            <div className="relative max-w-lg mx-auto md:mx-0 mb-6">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search sarees by name..."
+                className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            {/* Filters bar */}
+            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+              <button onClick={() => setFilterOpen(!filterOpen)} className="md:hidden btn-outline-primary flex items-center gap-2 text-sm py-2 px-4">
+                <SlidersHorizontal className="h-4 w-4" /> Filters
               </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            {hasActiveFilters && (
-              <button onClick={clearFilters} className="text-xs text-destructive hover:underline">Clear All</button>
-            )}
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-card border border-border rounded-lg px-4 py-2 text-sm">
-              <option value="">Sort by</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="newest">Newest First</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Price Range - Desktop */}
-        <div className="hidden md:flex items-center gap-4 mb-8 max-w-md">
-          <span className="text-sm font-medium whitespace-nowrap">Price:</span>
-          <span className="text-xs text-muted-foreground">₹{priceRange[0].toLocaleString()}</span>
-          <Slider
-            min={0}
-            max={maxPrice}
-            step={500}
-            value={priceRange}
-            onValueChange={(val) => setPriceRange(val as [number, number])}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground">₹{priceRange[1].toLocaleString()}</span>
-        </div>
+              <div className="flex items-center gap-3">
+                {hasActiveFilters && (
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline">Clear All</button>
+                )}
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-card border border-border rounded-lg px-4 py-2 text-sm">
+                  <option value="">Sort by</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest First</option>
+                </select>
+              </div>
+            </div>
 
         {/* Mobile filter drawer */}
         {filterOpen && (
@@ -211,71 +253,73 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
           </div>
         )}
 
-        {/* Grid */}
-        {filtered.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">No products found matching your filters.</div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {pagedProducts.map((p) => <ProductCard key={p.id} product={p} />)}
-            </div>
+            {/* Grid */}
+            {filtered.length === 0 ? (
+              <div className="text-center py-20 text-muted-foreground">No products found matching your filters.</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {pagedProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+                </div>
 
-            <div className="mt-10 flex flex-col items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} - {endIndexExclusive} of {totalProducts} products
-              </div>
+                <div className="mt-10 flex flex-col items-center gap-4">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1} - {endIndexExclusive} of {totalProducts} products
+                  </div>
 
-              {totalPages > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
                           if (page > 1) handleSetPage(page - 1);
                         }}
-                        aria-disabled={page <= 1}
-                        className={page <= 1 ? 'pointer-events-none opacity-50' : undefined}
-                      />
-                    </PaginationItem>
+                        disabled={page <= 1}
+                        className="px-4 py-2 rounded-lg border border-border bg-card text-sm text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
+                      >
+                        Previous
+                      </button>
 
-                    {getPageItems().map((it, idx) => (
-                      <PaginationItem key={`${it}-${idx}`}>
-                        {it === 'ellipsis' ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            href="#"
-                            isActive={it === page}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleSetPage(it);
-                            }}
+                      {getPageItems().map((it, idx) => {
+                        if (it === 'ellipsis') {
+                          return (
+                            <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+                              ...
+                            </span>
+                          );
+                        }
+
+                        const isActive = it === page;
+                        return (
+                          <button
+                            key={`page-${it}-${idx}`}
+                            type="button"
+                            onClick={() => handleSetPage(it)}
+                            className={`h-10 min-w-10 px-3 rounded-lg border text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:bg-muted/50'}`}
+                            aria-current={isActive ? 'page' : undefined}
                           >
                             {it}
-                          </PaginationLink>
-                        )}
-                      </PaginationItem>
-                    ))}
+                          </button>
+                        );
+                      })}
 
-                    <PaginationItem>
-                      <PaginationNext
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
+                      <button
+                        type="button"
+                        onClick={() => {
                           if (page < totalPages) handleSetPage(page + 1);
                         }}
-                        aria-disabled={page >= totalPages}
-                        className={page >= totalPages ? 'pointer-events-none opacity-50' : undefined}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
-            </div>
-          </>
-        )}
+                        disabled={page >= totalPages}
+                        className="px-4 py-2 rounded-lg border border-border bg-card text-sm text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </PublicLayout>
   );

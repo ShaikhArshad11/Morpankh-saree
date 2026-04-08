@@ -120,10 +120,6 @@ export async function PUT(
 
     if (body?.shortDescription !== undefined) update.shortDescription = body.shortDescription;
 
-    if (body?.salePercent !== undefined) {
-      update.salePercent = body.salePercent ? Number(body.salePercent) : undefined;
-    }
-
     if (body?.hidden !== undefined) update.hidden = Boolean(body.hidden);
     if (body?.featured !== undefined) update.featured = Boolean(body.featured);
     if (body?.isNew !== undefined) update.isNew = Boolean(body.isNew);

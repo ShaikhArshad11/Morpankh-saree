@@ -258,7 +258,6 @@ interface ProductDetail {
   category: string;
   basePrice: number;
   compareAtPrice?: number;
-  salePercent?: number;
   shortDescription?: string;
   description?: string;
   fabricType?: string;
@@ -379,6 +378,7 @@ export default function ProductDetailPage() {
       name: product.name,
       image: selectedColor.images[0] || '/placeholder.svg',
       price: product.basePrice,
+      comparePrice: product.compareAtPrice,
       color: selectedColor.colorName,
       quantity,
     });
@@ -468,9 +468,9 @@ export default function ProductDetailPage() {
             {/* Title & SKU */}
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                {product.isSale && product.salePercent && (
+                {product.isSale && product.compareAtPrice && product.compareAtPrice > product.basePrice && (
                   <span className="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded">
-                    {product.salePercent}% OFF
+                    {Math.round(((product.compareAtPrice - product.basePrice) / product.compareAtPrice) * 100)}% OFF
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground">SKU: {product.sku}</span>
@@ -530,11 +530,6 @@ export default function ProductDetailPage() {
                 >
                   <Plus className="h-4 w-4" />
                 </button>
-                {!isOutOfStock && (
-                  <span className="text-xs text-muted-foreground">
-                    {totalStock} available
-                  </span>
-                )}
               </div>
             </div>
 
@@ -595,7 +590,7 @@ export default function ProductDetailPage() {
               <div className="flex flex-col items-center text-center gap-1">
                 <Truck className="h-5 w-5 text-primary" />
                 <p className="text-xs font-medium">Free Delivery</p>
-                <p className="text-[10px] text-muted-foreground">Orders over ₹5,000</p>
+                <p className="text-[10px] text-muted-foreground">All Over India</p>
               </div>
               <div className="flex flex-col items-center text-center gap-1">
                 <ShieldCheck className="h-5 w-5 text-primary" />
@@ -622,11 +617,6 @@ export default function ProductDetailPage() {
                 {product.sareeLength && (
                   <SpecRow icon={<Ruler className="h-3.5 w-3.5" />} label="Length" value={product.sareeLength} />
                 )}
-                <SpecRow
-                  icon={<Package className="h-3.5 w-3.5" />}
-                  label="Blouse"
-                  value={product.blouseIncluded ? 'Included' : 'Not Included'}
-                />
               </div>
             </div>
 

@@ -66,24 +66,18 @@ export async function GET(_request: NextRequest) {
         : [];
 
       const imagesFromVariants = Array.isArray(rawColors)
-        ? rawColors
-            .flatMap((c) => getVariantImages(c))
+        ? rawColors.flatMap((c) => getVariantImages(c))
         : [];
 
-      const images = (
-        (Array.isArray(p.images) ? (p.images as unknown[]) : []).filter(
-          (u): u is string => typeof u === 'string' && u.length > 0
-        )
-      ).length
-        ? ((p.images as unknown[]) as string[])
+      const images = Array.isArray(p.images) && p.images.length
+        ? (p.images as unknown[]).filter((u): u is string => typeof u === 'string' && u.length > 0)
         : imagesFromVariants;
 
       const stock = toNumber(p.stock);
-      const salePercent = p.salePercent !== undefined ? toNumber(p.salePercent) : undefined;
       const isSale =
         p.isSale !== undefined
           ? Boolean(p.isSale)
-          : Boolean(salePercent) || (comparePrice > price);
+          : (comparePrice > price);
 
       return {
         id: String(p._id),
@@ -107,7 +101,6 @@ export async function GET(_request: NextRequest) {
         rating: toNumber(p.rating),
         reviews: toNumber(p.reviewCount ?? p.reviews),
         hidden: Boolean(p.hidden),
-        salePercent,
       };
     });
 

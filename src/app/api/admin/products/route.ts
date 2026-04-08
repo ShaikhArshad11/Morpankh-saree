@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
       fabricType: body?.fabricType ?? body?.fabric ?? '',
       shortDescription: body?.shortDescription,
 
-      salePercent: body?.salePercent ? Number(body.salePercent) : undefined,
       hidden: Boolean(body?.hidden),
       featured: Boolean(body?.featured),
       isNew: Boolean(body?.isNew),
