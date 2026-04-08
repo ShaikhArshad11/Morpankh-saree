@@ -38,15 +38,50 @@ const Footer = () => {
           {/* Find Us + Social */}
           <div>
             <h4 className="font-display text-lg font-semibold mb-4">Find Us</h4>
-            <div className="w-full h-32 bg-background/10 rounded-lg mb-4 flex items-center justify-center text-background/40 text-sm">
-              📍 Google Map
-            </div>
+            <a 
+              href="https://www.google.com/maps/@18.5618324,73.9313611,2465m/data=!3m1!1e3?hl=en&entry=ttu&g_ep=EgoyMDI2MDQwNS4wIKXMDSoASAFQAw%3D%3D" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block w-full h-32 bg-background/10 rounded-lg mb-4 hover:bg-background/20 transition-colors overflow-hidden"
+            >
+              <div className="w-full h-full flex items-center justify-center text-background/40 text-sm hover:text-background/60 transition-colors">
+                📍 View on Google Maps
+              </div>
+            </a>
             <h4 className="font-display text-lg font-semibold mb-3">Follow Us</h4>
             <div className="flex gap-3">
-              <a href="#" className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"><Facebook className="h-4 w-4" /></a>
-              <a href="#" className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"><Instagram className="h-4 w-4" /></a>
-              <a href="#" className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"><Youtube className="h-4 w-4" /></a>
-              <a href="#" className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"><MessageCircle className="h-4 w-4" /></a>
+              <a 
+                href="https://www.facebook.com/people/Morpankh-Sarees/100076174158976/?rdid=EdmHbLjUb5E8ruwj&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F189HUoPmQo%2F" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"
+              >
+                <Facebook className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://www.instagram.com/morpankhsaree?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw%3D%3D" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"
+              >
+                <Instagram className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://www.youtube.com/channel/UCH331lbGaXrlDH4Qua-YA9g" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"
+              >
+                <Youtube className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://api.whatsapp.com/send/?phone=919096089004&text&type=phone_number&app_absent=0" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </a>
             </div>
           </div>
         </div>
