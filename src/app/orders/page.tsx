@@ -36,9 +36,6 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!isLoggedIn || !user) {
@@ -128,16 +125,6 @@ const OrdersPage = () => {
     setFromDate('');
     setToDate('');
   };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging)
-      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
-  const handleMouseUp = () => setIsDragging(false);
 
   if (!isLoggedIn || !user) {
     return (
@@ -257,14 +244,6 @@ const OrdersPage = () => {
         {/* ── DRAGGABLE CONTENT ── */}
         <div
           className="container mx-auto px-4 py-12 relative z-10"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'grab',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           {/* page pill + title */}
           <div className="text-center mb-14 fade-up-1">

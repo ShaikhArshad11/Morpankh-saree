@@ -24,25 +24,11 @@ function useScrollReveal() {
 }
 
 const Contact = () => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [charCount, setCharCount] = useState(0);
   useScrollReveal();
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging)
-      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
-  const handleMouseUp = () => setIsDragging(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,17 +191,9 @@ const Contact = () => {
           </div>
         </div>
 
-        {/* ── DRAGGABLE CONTENT ── */}
+        {/* ── CONTENT ── */}
         <div
           className="container mx-auto px-4 py-12 relative z-10"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'grab',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           {/* page pill + title */}
           <div className="text-center mb-14 fade-up-1">

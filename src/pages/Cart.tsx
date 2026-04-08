@@ -7,19 +7,6 @@ import { useStore } from '@/store/useStore';
 const Cart = () => {
   const { cart, updateCartQuantity, removeFromCart } = useStore();
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging)
-      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
-  const handleMouseUp = () => setIsDragging(false);
 
   if (cart.length === 0) {
     return (
@@ -124,14 +111,6 @@ const Cart = () => {
           {/* DRAGGABLE CONTENT */}
           <div
             className="container mx-auto px-4 py-12 relative z-10"
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px)`,
-              cursor: isDragging ? 'grabbing' : 'grab',
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
           >
             {/* page pill + title */}
             <div className="text-center mb-14 fade-up-1">
@@ -266,14 +245,6 @@ const Cart = () => {
         {/* DRAGGABLE CONTENT */}
         <div
           className="container mx-auto px-4 py-12 relative z-10"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'grab',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           {/* page pill + title */}
           <div className="text-center mb-14 fade-up-1">
@@ -311,7 +282,7 @@ const Cart = () => {
                       <p className="text-sm text-muted-foreground mb-2">
                         Color: {item.color}{item.size ? ` | Size: ${item.size}` : ''}
                       </p>
-                      <p className="font-bold text-xl mb-4" style={{ color: 'hsl(var(--primary))' }}>#{item.price.toLocaleString()}</p>
+                      <p className="font-bold text-xl mb-4" style={{ color: 'hsl(var(--primary))' }}>₹{item.price.toLocaleString()}</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <button 
@@ -353,7 +324,7 @@ const Cart = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between items-center pb-4 border-b border-border/30">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-semibold">#{subtotal.toLocaleString()}</span>
+                    <span className="font-semibold">₹{subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center pb-4 border-b border-border/30">
                     <span className="text-muted-foreground">Shipping</span>
@@ -362,7 +333,7 @@ const Cart = () => {
                 </div>
                 <div className="border-t border-border/60 pt-4 flex justify-between items-center mb-6">
                   <span className="text-lg font-bold">Total</span>
-                  <span className="text-2xl font-bold" style={{ color: 'hsl(var(--primary))' }}>#{subtotal.toLocaleString()}</span>
+                  <span className="text-2xl font-bold" style={{ color: 'hsl(var(--primary))' }}>₹{subtotal.toLocaleString()}</span>
                 </div>
                 <Link 
                   href="/checkout" 

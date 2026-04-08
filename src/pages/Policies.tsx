@@ -19,19 +19,6 @@ const AnimatedPolicyPage = ({
   children: React.ReactNode;
   banner?: React.ReactNode;
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging)
-      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
-  const handleMouseUp = () => setIsDragging(false);
 
   return (
     <PublicLayout>
@@ -101,17 +88,9 @@ const AnimatedPolicyPage = ({
         {/* ── optional banner slot ── */}
         {banner}
 
-        {/* ── draggable content ── */}
+        {/* ── content ── */}
         <div
           className="container mx-auto px-4 py-12 relative z-10"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'grab',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           {/* page header */}
           <div className="text-center mb-14 fade-up-1">

@@ -8,19 +8,6 @@ import { toast } from '@/hooks/use-toast';
 const Wishlist = () => {
   const { products, wishlist, toggleWishlist, addToCart } = useStore();
   const wishlistProducts = products.filter((p) => wishlist.includes(p.id));
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging)
-      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
-  const handleMouseUp = () => setIsDragging(false);
 
   if (wishlistProducts.length === 0) {
     return (
@@ -125,14 +112,6 @@ const Wishlist = () => {
           {/* DRAGGABLE CONTENT */}
           <div
             className="container mx-auto px-4 py-12 relative z-10"
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px)`,
-              cursor: isDragging ? 'grabbing' : 'grab',
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
           >
             {/* page pill + title */}
             <div className="text-center mb-14 fade-up-1">
@@ -267,14 +246,6 @@ const Wishlist = () => {
         {/* DRAGGABLE CONTENT */}
         <div
           className="container mx-auto px-4 py-12 relative z-10"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px)`,
-            cursor: isDragging ? 'grabbing' : 'grab',
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           {/* page pill + title */}
           <div className="text-center mb-14 fade-up-1">
@@ -313,9 +284,9 @@ const Wishlist = () => {
                   <div className="p-4">
                     <h3 className="font-medium text-sm truncate mb-2">{p.name}</h3>
                     <div className="flex items-center justify-between mb-3">
-                      <p className="font-bold text-lg" style={{ color: 'hsl(var(--primary))' }}>#{p.price.toLocaleString()}</p>
+                      <p className="font-bold text-lg" style={{ color: 'hsl(var(--primary))' }}>₹{p.price.toLocaleString()}</p>
                       {p.comparePrice > p.price && (
-                        <p className="text-muted-foreground text-xs line-through">#{p.comparePrice.toLocaleString()}</p>
+                        <p className="text-muted-foreground text-xs line-through">₹{p.comparePrice.toLocaleString()}</p>
                       )}
                     </div>
                     <div className="flex gap-2">
