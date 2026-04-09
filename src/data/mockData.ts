@@ -42,7 +42,7 @@ export interface Order {
   city: string;
   state: string;
   pincode: string;
-  items: { productId: string; name: string; color: string; size?: string; quantity: number; price: number }[];
+  items: { productId: string; name: string; image?: string; color: string; size?: string; quantity: number; price: number }[];
   subtotal: number;
   total: number;
   paymentStatus: 'pending' | 'paid' | 'failed';
