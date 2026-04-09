@@ -44,6 +44,7 @@ const Checkout = () => {
           items: cart.map((c) => ({
             productId: c.productId,
             name: c.name,
+            image: c.image,
             color: c.color,
             size: c.size,
             quantity: c.quantity,

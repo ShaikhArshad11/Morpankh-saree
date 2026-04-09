@@ -7,6 +7,7 @@ export const runtime = 'nodejs';
 interface OrderItem {
   productId: string;
   name: string;
+  image?: string;
   color: string;
   size?: string;
   quantity: number;
@@ -82,6 +83,7 @@ function normalizeOrderItem(raw: unknown): OrderItem | null {
 
   const productId = String(r.productId ?? '').trim();
   const name = String(r.name ?? '').trim();
+  const image = typeof r.image === 'string' ? r.image.trim() : undefined;
   const color = String(r.color ?? '').trim();
   const size = typeof r.size === 'string' ? r.size : undefined;
   const quantity = Number(r.quantity);
@@ -94,6 +96,7 @@ function normalizeOrderItem(raw: unknown): OrderItem | null {
   return {
     productId,
     name,
+    image,
     color,
     size,
     quantity,

@@ -37,6 +37,34 @@ const OrdersPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
 
+  const fetchOrders = async (authToken?: string | null) => {
+    const tokenToUse = authToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+    if (!tokenToUse) {
+      setMyOrders([]);
+      setFilteredOrders([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/orders', {
+        headers: {
+          authorization: `Bearer ${tokenToUse}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data?.success && Array.isArray(data.data)) {
+        setMyOrders(data.data as Order[]);
+      } else {
+        setMyOrders([]);
+      }
+    } catch {
+      setMyOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isLoggedIn || !user) {
       setMyOrders([]);
@@ -45,32 +73,25 @@ const OrdersPage = () => {
     }
 
     const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
-    if (!authToken) {
-      setMyOrders([]);
-      setLoading(false);
-      return;
+    fetchOrders(authToken);
+  }, [isLoggedIn, user, token]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (!isLoggedIn || !user) return;
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+      if (authToken) fetchOrders(authToken);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocus);
     }
 
-    setLoading(true);
-    (async () => {
-      try {
-        const res = await fetch('/api/orders', {
-          headers: {
-            authorization: `Bearer ${authToken}`,
-          },
-        });
-        const data = await res.json();
-        if (res.ok && data?.success && Array.isArray(data.data)) {
-          setMyOrders(data.data as Order[]);
-        } else {
-          setMyOrders([]);
-        }
-      } catch {
-        setMyOrders([]);
-      } finally {
-        setLoading(false);
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
       }
-    })();
+    };
   }, [isLoggedIn, user, token]);
 
   useEffect(() => {
@@ -302,6 +323,15 @@ const OrdersPage = () => {
                   >
                     <RotateCcw className="w-4 h-4" />
                     Reset
+                  </button>
+                  <button
+                    onClick={() => {
+                      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+                      fetchOrders(authToken);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors"
+                  >
+                    Refresh
                   </button>
                 </div>
               </div>
