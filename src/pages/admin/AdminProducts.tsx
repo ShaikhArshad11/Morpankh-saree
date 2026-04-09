@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload, FileText } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
@@ -79,6 +79,8 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<DbProduct | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsProduct, setDetailsProduct] = useState<DbProduct | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>({
     name: '', 
@@ -169,6 +171,11 @@ const AdminProducts = () => {
       sareeLength: p.sareeLength || '',
     });
     setModalOpen(true);
+  };
+
+  const openDetailsModal = (p: DbProduct) => {
+    setDetailsProduct(p);
+    setDetailsOpen(true);
   };
 
   // Color management functions
@@ -406,6 +413,13 @@ const AdminProducts = () => {
                     </span>
                   </td>
                   <td className="p-4 text-right space-x-1">
+                    <button
+                      onClick={() => openDetailsModal(p)}
+                      className="p-2 hover:bg-muted rounded-lg transition-colors"
+                      title="View Details"
+                    >
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    </button>
                     <button onClick={() => toggleHidden(p)} className="p-2 hover:bg-muted rounded-lg transition-colors" title={p.hidden ? 'Show' : 'Hide'}>
                       {p.hidden ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                     </button>
@@ -692,6 +706,191 @@ const AdminProducts = () => {
                   {editing ? 'Update Product' : 'Add Product'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Details Modal */}
+      {detailsOpen && detailsProduct && (
+        <div className="fixed inset-0 z-50 bg-foreground/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-semibold">Product Details</h2>
+              <button
+                onClick={() => {
+                  setDetailsOpen(false);
+                  setDetailsProduct(null);
+                }}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div className="rounded-lg border border-border p-3 bg-muted/30">
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Name:</span>{' '}
+                      <span className="font-medium">{detailsProduct.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Slug:</span>{' '}
+                      <span className="font-medium">{detailsProduct.slug}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">SKU:</span>{' '}
+                      <span className="font-medium">{detailsProduct.sku || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Category:</span>{' '}
+                      <span className="font-medium">{detailsProduct.category || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Status:</span>{' '}
+                      <span className="font-medium">{detailsProduct.hidden ? 'Hidden' : 'Visible'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border p-3">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">Sale Price</div>
+                      <div className="font-semibold">₹{Number(detailsProduct.price || 0).toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Original Price</div>
+                      <div className="font-semibold">₹{Number(detailsProduct.comparePrice || 0).toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Offer</div>
+                      <div className="font-semibold">
+                        {detailsProduct.comparePrice > detailsProduct.price
+                          ? `${Math.round(((detailsProduct.comparePrice - detailsProduct.price) / detailsProduct.comparePrice) * 100)}%`
+                          : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Stock</div>
+                      <div className="font-semibold">{detailsProduct.stock ?? 0}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border p-3 text-sm">
+                  <div className="grid grid-cols-1 gap-2">
+                    <div>
+                      <span className="text-muted-foreground">Fabric:</span>{' '}
+                      <span className="font-medium">{detailsProduct.fabric || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Saree Length:</span>{' '}
+                      <span className="font-medium">{detailsProduct.sareeLength || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Tags:</span>{' '}
+                      <span className="font-medium">{Array.isArray(detailsProduct.tags) && detailsProduct.tags.length ? detailsProduct.tags.join(', ') : '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Highlights:</span>{' '}
+                      <span className="font-medium">
+                        {[
+                          detailsProduct.featured ? 'Featured' : null,
+                          detailsProduct.isNew ? 'New' : null,
+                          detailsProduct.isPremium ? 'Premium' : null,
+                          detailsProduct.isTrending ? 'Trending' : null,
+                        ]
+                          .filter(Boolean)
+                          .join(', ') || '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Rating:</span>{' '}
+                      <span className="font-medium">{typeof detailsProduct.rating === 'number' ? detailsProduct.rating : '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Reviews:</span>{' '}
+                      <span className="font-medium">{typeof detailsProduct.reviews === 'number' ? detailsProduct.reviews : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-sm font-medium mb-2">Images</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Array.isArray(detailsProduct.images) ? detailsProduct.images : [])
+                      .concat(
+                        (Array.isArray(detailsProduct.colors) ? detailsProduct.colors : []).flatMap((c) =>
+                          Array.isArray(c.images) ? c.images : []
+                        )
+                      )
+                      .filter(Boolean)
+                      .slice(0, 12)
+                      .map((img, idx) => (
+                        <img
+                          key={`${img}-${idx}`}
+                          src={img}
+                          alt={detailsProduct.name}
+                          className="w-full h-24 object-cover rounded border border-border"
+                        />
+                      ))}
+                  </div>
+                  {(!detailsProduct.images || detailsProduct.images.length === 0) && (!detailsProduct.colors || detailsProduct.colors.length === 0) && (
+                    <div className="text-sm text-muted-foreground">No images.</div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-sm font-medium mb-2">Description</div>
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap">{detailsProduct.description || '—'}</div>
+                </div>
+
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-sm font-medium mb-2">Color Variants</div>
+                  <div className="space-y-2">
+                    {(Array.isArray(detailsProduct.colors) ? detailsProduct.colors : []).length === 0 ? (
+                      <div className="text-sm text-muted-foreground">No color variants.</div>
+                    ) : (
+                      (detailsProduct.colors || []).map((c, idx) => (
+                        <div key={`${c.colorName}-${idx}`} className="rounded-lg border border-border p-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-medium truncate">{c.colorName || '—'}</div>
+                            <div className="text-muted-foreground">Stock: <span className="font-medium text-foreground">{c.stock ?? 0}</span></div>
+                          </div>
+                          {Array.isArray(c.images) && c.images.length > 0 && (
+                            <div className="mt-2 flex gap-2 flex-wrap">
+                              {c.images.slice(0, 6).map((img, imgIdx) => (
+                                <img
+                                  key={`${img}-${imgIdx}`}
+                                  src={img}
+                                  alt={c.colorName}
+                                  className="w-16 h-16 object-cover rounded border border-border"
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6">
+              <button
+                onClick={() => {
+                  setDetailsOpen(false);
+                  setDetailsProduct(null);
+                }}
+                className="btn-outline-primary text-sm py-2 px-4"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

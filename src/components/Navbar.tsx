@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Heart, User, Menu, X, LogOut } from 'lucide-react';
+import { ShoppingCart, Heart, User, Menu, X, LogOut, Send } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
 import Image from 'next/image';
@@ -27,6 +27,30 @@ const Navbar = () => {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const [userMenu, setUserMenu] = useState(false);
 
+  const [announcement, setAnnouncement] = useState<{ text: string; enabled: boolean } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/announcement-bar');
+        const data = await res.json();
+        if (!mounted) return;
+        if (res.ok && data && typeof data.enabled === 'boolean' && typeof data.text === 'string') {
+          setAnnouncement({ text: data.text, enabled: data.enabled });
+        } else {
+          setAnnouncement(null);
+        }
+      } catch {
+        if (!mounted) return;
+        setAnnouncement(null);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === '/') return pathname === '/';
@@ -34,8 +58,38 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
-      <div className="container mx-auto px-4 flex items-center justify-between">
+    <div className="sticky top-0 z-50">
+      {announcement?.enabled ? (
+        <div className="bg-black text-white">
+          <style>{`
+            @keyframes announcement-marquee-ltr {
+              from { transform: translateX(-50%); }
+              to { transform: translateX(0%); }
+            }
+          `}</style>
+          <div className="container mx-auto px-4 py-2 overflow-hidden">
+            <div
+              className="inline-flex items-center gap-8 whitespace-nowrap"
+              style={{
+                width: 'max-content',
+                animation: 'announcement-marquee-ltr 18s linear infinite',
+              }}
+            >
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+                <Send className="h-4 w-4" />
+                <span>{announcement.text}</span>
+              </div>
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium" aria-hidden="true">
+                <Send className="h-4 w-4" />
+                <span>{announcement.text}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <nav className="bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
+        <div className="container mx-auto px-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image src={logo} alt="Morpankh Saree" height={120} width={120} />
         </Link>
@@ -129,28 +183,29 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden bg-card border-t border-border animate-slide-in-right">
-          <div className="flex flex-col p-4 gap-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                href={link.to}
-                onClick={() => setMobileOpen(false)}
-                className={
-                  isActive(link.to)
-                    ? 'py-2 px-4 rounded-lg transition-colors bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
-                    : 'py-2 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors'
-                }
-              >
-                {link.label}
-              </Link>
-            ))}
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="md:hidden bg-card border-t border-border animate-slide-in-right">
+            <div className="flex flex-col p-4 gap-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  href={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className={
+                    isActive(link.to)
+                      ? 'py-2 px-4 rounded-lg transition-colors bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
+                      : 'py-2 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors'
+                  }
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </nav>
+        )}
+      </nav>
+    </div>
   );
 };
 

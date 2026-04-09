@@ -253,6 +253,12 @@ const Index = () => {
 
       {/* Reviews */}
       <section className="py-12 bg-muted">
+        <style>{`
+          @keyframes reviewsMarqueeLTR {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0%); }
+          }
+        `}</style>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-4 mb-2">
             <h2 className="section-title">Customer Reviews</h2>
@@ -262,30 +268,43 @@ const Index = () => {
               <Plus className="h-4 w-4" /> Add Review
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {reviewsLoading ? (
-              <div className="col-span-full text-center text-sm text-muted-foreground">Loading reviews...</div>
-            ) : approvedReviews.length === 0 ? (
-              <div className="col-span-full text-center text-sm text-muted-foreground">No reviews yet.</div>
-            ) : (
-              approvedReviews.map((review) => (
-                <div key={review._id} className="bg-card rounded-xl p-6 card-hover border border-border">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">{review.avatar}</div>
-                    <div>
-                      <p className="font-medium text-sm">{review.name}</p>
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`h-3 w-3 ${i < review.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
-                        ))}
+          {reviewsLoading ? (
+            <div className="text-center text-sm text-muted-foreground">Loading reviews...</div>
+          ) : approvedReviews.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground">No reviews yet.</div>
+          ) : (
+            <div className="relative overflow-hidden">
+              <div
+                className="flex w-max gap-6"
+                style={{ animation: 'reviewsMarqueeLTR 30s linear infinite' }}
+              >
+                {approvedReviews.concat(approvedReviews).map((review, idx) => (
+                  <div
+                    key={`${review._id}-${idx}`}
+                    className="bg-card rounded-xl p-6 card-hover border border-border flex-shrink-0 w-[280px]"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                        {review.avatar}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{review.name}</p>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3 w-3 ${i < review.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
+                    <p className="text-sm text-muted-foreground">{review.comment}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{review.comment}</p>
-                </div>
-              ))
-            )}
-          </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

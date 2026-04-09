@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, Filter, WithId } from 'mongodb';
+import { Filter, WithId } from 'mongodb';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 interface ReviewDoc {
   name: string;
@@ -8,13 +9,6 @@ interface ReviewDoc {
   avatar: string;
   approved: boolean;
   createdAt: Date;
-}
-
-async function getMongoClient(uri: string) {
-  return new MongoClient(uri, {
-    serverSelectionTimeoutMS: 5_000,
-    connectTimeoutMS: 5_000,
-  });
 }
 
 export async function GET(request: NextRequest) {
@@ -33,7 +27,7 @@ export async function GET(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morpankh_saree');
+    const db = client.db(getDatabaseName());
     const reviews = db.collection<ReviewDoc>('reviews');
 
     const query: Filter<ReviewDoc> = {};
@@ -101,7 +95,7 @@ export async function POST(request: NextRequest) {
       .slice(0, 2);
 
     await client.connect();
-    const db = client.db('morpankh_saree');
+    const db = client.db(getDatabaseName());
     const reviews = db.collection<ReviewDoc>('reviews');
 
     const result = await reviews.insertOne({

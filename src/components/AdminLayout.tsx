@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare, Mail } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ClipboardList, Warehouse, Download, LogOut, User, MessageSquare, Mail, Megaphone } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import logo from '@/assets/logo.png';
 import { toast } from '@/hooks/use-toast';
@@ -14,6 +14,7 @@ const menuItems = [
   { label: 'Messages', to: '/admin/messages', icon: Mail },
   { label: 'Reviews', to: '/admin/reviews', icon: MessageSquare },
   { label: 'Inventory', to: '/admin/inventory', icon: Warehouse },
+  { label: 'Announcement', to: '/admin/announcement-bar', icon: Megaphone },
   { label: 'Export Data', to: '/admin/export', icon: Download },
   { label: 'Logout', to: '#', icon: LogOut, isLogout: true },
 ];

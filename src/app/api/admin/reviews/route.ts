@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, WithId } from 'mongodb';
+import { WithId } from 'mongodb';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 interface ReviewDoc {
   name: string;
@@ -15,13 +16,6 @@ function isAdminRequest(request: NextRequest) {
   const match = auth.match(/^Bearer\s+(.+)$/i);
   const token = match?.[1]?.trim();
   return token === 'admin-token';
-}
-
-async function getMongoClient(uri: string) {
-  return new MongoClient(uri, {
-    serverSelectionTimeoutMS: 5_000,
-    connectTimeoutMS: 5_000,
-  });
 }
 
 export async function GET(request: NextRequest) {
@@ -40,7 +34,7 @@ export async function GET(request: NextRequest) {
   const client = await getMongoClient(uri);
   try {
     await client.connect();
-    const db = client.db('morpankh_saree');
+    const db = client.db(getDatabaseName());
     const reviews = db.collection<ReviewDoc>('reviews');
 
     const reviewsRaw = await reviews
