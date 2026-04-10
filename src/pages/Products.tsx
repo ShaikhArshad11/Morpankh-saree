@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { SlidersHorizontal, X, Search } from 'lucide-react';
+import { SlidersHorizontal, X, Search, ShoppingBag, Loader2 } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
@@ -120,103 +120,211 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
 
   return (
     <PublicLayout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="section-title mb-8">Our Collection</h1>
+      <style>{`
+        @keyframes float1{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-24px) scale(1.03)}}
+        @keyframes float2{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(18px) scale(0.97)}}
+        @keyframes float3{0%,100%{transform:translateX(0)}50%{transform:translateX(12px)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes bannerReveal{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
+        @keyframes zoomPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+        @keyframes spinSlow{to{transform:rotate(360deg)}}
+        @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+        .banner-reveal{animation:bannerReveal 0.9s cubic-bezier(0.22,1,0.36,1) forwards}
+        .fade-up-1{opacity:0;animation:fadeUp 0.6s ease 0.1s forwards}
+        .fade-up-2{opacity:0;animation:fadeUp 0.6s ease 0.25s forwards}
+        .fade-up-3{opacity:0;animation:fadeUp 0.6s ease 0.4s forwards}
+        .product-card:hover{transform:translateY(-12px) scale(1.05) rotate-2;box-shadow:0 32px 64px hsl(var(--primary)/0.2)}
+        .product-card{transition:transform 0.4s ease,box-shadow 0.4s ease}
+        .logo-pulse{animation:zoomPulse 4s ease-in-out infinite}
+        .spin-ring{animation:spinSlow 22s linear infinite}
+      `}</style>
 
-        <div className="flex gap-8">
-          <aside className="hidden md:block w-72 shrink-0">
-            <div className="bg-card border border-border rounded-xl p-5 sticky top-24">
-              <div className="mb-6">
-                <div className="text-sm font-semibold mb-3">Price Range</div>
-                <div className="px-1">
-                  <Slider
-                    min={0}
-                    max={maxPrice}
-                    step={500}
-                    value={priceRange}
-                    onValueChange={(val) => setPriceRange(val as [number, number])}
-                  />
-                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>₹{priceRange[0].toLocaleString()}</span>
-                    <span>₹{priceRange[1].toLocaleString()}</span>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* background gradient */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(160deg, hsl(var(--primary)/0.06) 0%, hsl(var(--background)) 50%, hsl(var(--secondary)/0.08) 100%)',
+          }}
+        />
+
+        {/* floating orbs */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 380, height: 380, top: -80, right: -100,
+            background: 'radial-gradient(circle, hsl(var(--primary)/0.12), transparent 70%)',
+            animation: 'float1 10s ease-in-out infinite',
+          }}
+        />
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 260, height: 260, bottom: 60, left: -80,
+            background: 'radial-gradient(circle, hsl(var(--secondary)/0.10), transparent 70%)',
+            animation: 'float2 8s ease-in-out infinite',
+          }}
+        />
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 180, height: 180, top: '40%', left: '5%',
+            background: 'radial-gradient(circle, hsl(var(--primary)/0.07), transparent 70%)',
+            animation: 'float3 9s ease-in-out infinite',
+          }}
+        />
+
+        {/* ── BANNER ── */}
+        <div className="relative w-full overflow-hidden banner-reveal" style={{ height: 260 }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(160deg, hsl(var(--primary)/0.95), hsl(168 60% 18%))',
+            }}
+          />
+          {/* dot grid */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+              backgroundSize: '32px 32px',
+            }}
+          />
+          {/* floating shapes */}
+          <div className="absolute" style={{ top: '12%', left: '8%', animation: 'float1 8s ease-in-out infinite' }}>
+            <div className="w-16 h-16 rounded-2xl rotate-12 border-2 border-white/20" />
+          </div>
+          <div className="absolute" style={{ top: '50%', right: '10%', animation: 'float2 9s ease-in-out infinite' }}>
+            <div className="w-12 h-12 rounded-full border-2 border-white/20" />
+          </div>
+          <div className="absolute" style={{ bottom: '15%', left: '18%', animation: 'float3 7s ease-in-out infinite' }}>
+            <div className="w-8 h-8 rounded-lg rotate-45 border border-white/20" />
+          </div>
+          <div className="absolute" style={{ top: '20%', right: '25%', animation: 'spinSlow 18s linear infinite' }}>
+            <div className="w-20 h-20 rounded-full border border-dashed border-white/15" />
+          </div>
+          {/* banner text */}
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-6 text-center">
+            <p className="text-white/60 text-xs font-medium tracking-widest uppercase mb-3">
+              Morpankh Saree · Products
+            </p>
+            <h2 className="text-4xl font-bold mb-2">Our Collection</h2>
+            <p className="text-white/70 text-sm max-w-md">
+              Discover our exquisite collection of traditional and contemporary sarees crafted with love and precision.
+            </p>
+          </div>
+        </div>
+
+        {/* ── DRAGGABLE CONTENT ── */}
+        <div
+          className="container mx-auto px-4 py-12 relative z-10"
+        >
+          {/* page pill + title */}
+          {/* <div className="text-center mb-14 fade-up-1">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-medium tracking-wide mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Product Explorer
+            </div>
+            <h1 className="text-5xl font-bold mb-4" style={{ color: 'hsl(var(--primary))' }}>
+              {totalProducts} Products
+            </h1>
+          </div> */}
+
+          <div className="flex gap-8">
+            <aside className="hidden md:block w-72 shrink-0">
+              <div className="filter-card rounded-2xl p-6 border border-border/60 shadow-xl backdrop-blur-xl fade-up-2" style={{ background: 'hsl(var(--card)/0.85)' }}>
+                <div className="mb-6">
+                  <div className="text-sm font-semibold mb-3">Price Range</div>
+                  <div className="px-1">
+                    <Slider
+                      min={0}
+                      max={maxPrice}
+                      step={500}
+                      value={priceRange}
+                      onValueChange={(val) => setPriceRange(val as [number, number])}
+                    />
+                    <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                      <span>₹{priceRange[0].toLocaleString()}</span>
+                      <span>₹{priceRange[1].toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mb-6">
-                <div className="text-sm font-semibold mb-3">Category</div>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setSelectedCategory('')}
-                    className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${!selectedCategory ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                  >
-                    All
-                  </button>
-                  {categories.map((cat) => (
+                <div className="mb-6">
+                  <div className="text-sm font-semibold mb-3">Category</div>
+                  <div className="space-y-2">
                     <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.slug)}
-                      className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.slug ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                      onClick={() => setSelectedCategory('')}
+                      className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${!selectedCategory ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
                     >
-                      {cat.name}
+                      All
                     </button>
-                  ))}
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.slug)}
+                        className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.slug ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-6">
-                <div className="text-sm font-semibold mb-3">Highlight</div>
-                <div className="space-y-2">
-                  {highlightFilters.map((f) => (
-                    <button
-                      key={f.key}
-                      onClick={() => setSelectedHighlight(selectedHighlight === f.key ? '' : f.key)}
-                      className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedHighlight === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
+                <div className="mb-6">
+                  <div className="text-sm font-semibold mb-3">Highlight</div>
+                  <div className="space-y-2">
+                    {highlightFilters.map((f) => (
+                      <button
+                        key={f.key}
+                        onClick={() => setSelectedHighlight(selectedHighlight === f.key ? '' : f.key)}
+                        className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${selectedHighlight === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {hasActiveFilters && (
-                <button onClick={clearFilters} className="text-xs text-destructive hover:underline">
-                  Clear All
-                </button>
-              )}
-            </div>
-          </aside>
-
-          <div className="flex-1 min-w-0">
-            {/* Search Bar */}
-            <div className="relative max-w-lg mx-auto md:mx-0 mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search sarees by name..."
-                className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* Filters bar */}
-            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-              <button onClick={() => setFilterOpen(!filterOpen)} className="md:hidden btn-outline-primary flex items-center gap-2 text-sm py-2 px-4">
-                <SlidersHorizontal className="h-4 w-4" /> Filters
-              </button>
-              <div className="flex items-center gap-3">
                 {hasActiveFilters && (
-                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline">Clear All</button>
+                  <button onClick={clearFilters} className="text-xs text-destructive hover:underline">
+                    Clear All
+                  </button>
                 )}
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-card border border-border rounded-lg px-4 py-2 text-sm">
-                  <option value="">Sort by</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="newest">Newest First</option>
-                </select>
               </div>
-            </div>
+            </aside>
+
+            <div className="flex-1 min-w-0">
+              {/* Search Bar */}
+              <div className="relative max-w-lg mx-auto md:mx-0 mb-6 fade-up-3">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search sarees by name..."
+                  className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              {/* Filters bar */}
+              <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                <button onClick={() => setFilterOpen(!filterOpen)} className="md:hidden btn-outline-primary flex items-center gap-2 text-sm py-2 px-4">
+                  <SlidersHorizontal className="h-4 w-4" /> Filters
+                </button>
+                <div className="flex items-center gap-3">
+                  {hasActiveFilters && (
+                    <button onClick={clearFilters} className="text-xs text-destructive hover:underline">Clear All</button>
+                  )}
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-card border border-border rounded-lg px-4 py-2 text-sm">
+                    <option value="">Sort by</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="newest">Newest First</option>
+                  </select>
+                </div>
+              </div>
 
         {/* Mobile filter drawer */}
         {filterOpen && (
@@ -253,71 +361,76 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
           </div>
         )}
 
-            {/* Grid */}
-            {filtered.length === 0 ? (
-              <div className="text-center py-20 text-muted-foreground">No products found matching your filters.</div>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                  {pagedProducts.map((p) => <ProductCard key={p.id} product={p} />)}
-                </div>
-
-                <div className="mt-10 flex flex-col items-center gap-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {startIndex + 1} - {endIndexExclusive} of {totalProducts} products
+              {/* Grid */}
+              {filtered.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground">No products found matching your filters.</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    {pagedProducts.map((p, index) => (
+                      <div key={p.id} className="product-card" style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+                        <ProductCard product={p} />
+                      </div>
+                    ))}
                   </div>
 
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (page > 1) handleSetPage(page - 1);
-                        }}
-                        disabled={page <= 1}
-                        className="px-4 py-2 rounded-lg border border-border bg-card text-sm text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
-                      >
-                        Previous
-                      </button>
-
-                      {getPageItems().map((it, idx) => {
-                        if (it === 'ellipsis') {
-                          return (
-                            <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
-                              ...
-                            </span>
-                          );
-                        }
-
-                        const isActive = it === page;
-                        return (
-                          <button
-                            key={`page-${it}-${idx}`}
-                            type="button"
-                            onClick={() => handleSetPage(it)}
-                            className={`h-10 min-w-10 px-3 rounded-lg border text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:bg-muted/50'}`}
-                            aria-current={isActive ? 'page' : undefined}
-                          >
-                            {it}
-                          </button>
-                        );
-                      })}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (page < totalPages) handleSetPage(page + 1);
-                        }}
-                        disabled={page >= totalPages}
-                        className="px-4 py-2 rounded-lg border border-border bg-card text-sm text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
-                      >
-                        Next
-                      </button>
+                  <div className="mt-10 flex flex-col items-center gap-4">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1} - {endIndexExclusive} of {totalProducts} products
                     </div>
-                  )}
-                </div>
-              </>
-            )}
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (page > 1) handleSetPage(page - 1);
+                          }}
+                          disabled={page <= 1}
+                          className="px-4 py-2 rounded-lg border border-border bg-card text-sm text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
+                        >
+                          Previous
+                        </button>
+
+                        {getPageItems().map((it, idx) => {
+                          if (it === 'ellipsis') {
+                            return (
+                              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+                                ...
+                              </span>
+                            );
+                          }
+
+                          const isActive = it === page;
+                          return (
+                            <button
+                              key={`page-${it}-${idx}`}
+                              type="button"
+                              onClick={() => handleSetPage(it)}
+                              className={`h-10 min-w-10 px-3 rounded-lg border text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:bg-muted/50'}`}
+                              aria-current={isActive ? 'page' : undefined}
+                            >
+                              {it}
+                            </button>
+                          );
+                        })}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (page < totalPages) handleSetPage(page + 1);
+                          }}
+                          disabled={page >= totalPages}
+                          className="px-4 py-2 rounded-lg border border-border bg-card text-sm text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted/50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
