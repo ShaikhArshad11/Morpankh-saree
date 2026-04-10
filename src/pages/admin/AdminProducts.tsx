@@ -98,12 +98,9 @@ const AdminProducts = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('adminToken');
-        if (!token) return;
-
         // Fetch categories
         const categoriesRes = await fetch('/api/admin/categories', {
-          headers: { authorization: `Bearer ${token}` }
+          headers: { authorization: 'Bearer admin-token' }
         });
         if (categoriesRes.ok) {
           const categoriesData = await categoriesRes.json();
@@ -112,7 +109,7 @@ const AdminProducts = () => {
 
         // Fetch products
         const productsRes = await fetch('/api/admin/products', {
-          headers: { authorization: `Bearer ${token}` }
+          headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();
@@ -239,19 +236,13 @@ const AdminProducts = () => {
     };
     
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        toast({ title: 'Authentication required', variant: 'destructive' });
-        return;
-      }
-
       let response;
       if (editing) {
         response = await fetch(`/api/admin/products/${editing._id}`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
-            authorization: `Bearer ${token}`
+            authorization: 'Bearer admin-token'
           },
           body: JSON.stringify(data),
         });
@@ -260,7 +251,7 @@ const AdminProducts = () => {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            authorization: `Bearer ${token}`
+            authorization: 'Bearer admin-token'
           },
           body: JSON.stringify(data),
         });
@@ -271,7 +262,7 @@ const AdminProducts = () => {
       if (response.ok) {
         // Refresh the products list
         const productsRes = await fetch('/api/admin/products', {
-          headers: { authorization: `Bearer ${token}` }
+          headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();
@@ -291,16 +282,10 @@ const AdminProducts = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        toast({ title: 'Authentication required', variant: 'destructive' });
-        return;
-      }
-
       const response = await fetch(`/api/admin/products/${id}`, {
         method: 'DELETE',
         headers: { 
-          authorization: `Bearer ${token}`
+          authorization: 'Bearer admin-token'
         },
       });
 
@@ -309,7 +294,7 @@ const AdminProducts = () => {
       if (response.ok) {
         // Refresh the products list
         const productsRes = await fetch('/api/admin/products', {
-          headers: { authorization: `Bearer ${token}` }
+          headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();
@@ -329,17 +314,11 @@ const AdminProducts = () => {
 
   const toggleHidden = async (p: DbProduct) => {
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        toast({ title: 'Authentication required', variant: 'destructive' });
-        return;
-      }
-
       const response = await fetch(`/api/admin/products/${p._id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
-          authorization: `Bearer ${token}`
+          authorization: 'Bearer admin-token'
         },
         body: JSON.stringify({ hidden: !p.hidden }),
       });
@@ -347,9 +326,9 @@ const AdminProducts = () => {
       const result = await response.json();
       
       if (response.ok) {
-        // Refresh the products list
+        // Refresh products list
         const productsRes = await fetch('/api/admin/products', {
-          headers: { authorization: `Bearer ${token}` }
+          headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();

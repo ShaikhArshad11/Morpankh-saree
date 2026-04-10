@@ -194,6 +194,30 @@ export const initialOrders: Order[] = [
     items: [{ productId: '3', name: 'Cotton Handloom Saree', color: 'Blue', quantity: 2, price: 1499 }],
     subtotal: 2998, total: 2998, paymentStatus: 'paid', orderStatus: 'confirmed', date: '2026-03-31',
   },
+  {
+    id: '5', orderNumber: 'MPS-1005', customerName: 'Kavita Joshi', customerEmail: 'kavita@email.com',
+    customerPhone: '9876543214', address: '567 JM Road', city: 'Pune', state: 'Maharashtra', pincode: '411002',
+    items: [{ productId: '7', name: 'Linen Saree', color: 'Beige', quantity: 1, price: 1999 }],
+    subtotal: 1999, total: 1999, paymentStatus: 'paid', orderStatus: 'shipped', date: '2026-04-02',
+  },
+  {
+    id: '6', orderNumber: 'MPS-1006', customerName: 'Rani Singh', customerEmail: 'rani@email.com',
+    customerPhone: '9876543215', address: '890 FC Road', city: 'Mumbai', state: 'Maharashtra', pincode: '400002',
+    items: [{ productId: '6', name: 'Georgette Party Saree', color: 'Navy', quantity: 1, price: 2499 }],
+    subtotal: 2499, total: 2499, paymentStatus: 'pending', orderStatus: 'pending', date: '2026-04-03',
+  },
+  {
+    id: '7', orderNumber: 'MPS-1007', customerName: 'Aarti Patel', customerEmail: 'aarti@email.com',
+    customerPhone: '9876543216', address: '123 Laxmi Road', city: 'Nagpur', state: 'Maharashtra', pincode: '440002',
+    items: [{ productId: '9', name: 'Chiffon Designer Saree', color: 'Teal', quantity: 1, price: 2999 }],
+    subtotal: 2999, total: 2999, paymentStatus: 'paid', orderStatus: 'confirmed', date: '2026-04-04',
+  },
+  {
+    id: '8', orderNumber: 'MPS-1008', customerName: 'Pooja Deshmukh', customerEmail: 'pooja@email.com',
+    customerPhone: '9876543217', address: '456 MG Road', city: 'Pune', state: 'Maharashtra', pincode: '411003',
+    items: [{ productId: '10', name: 'Tussar Silk Saree', color: 'Natural', quantity: 1, price: 5999 }],
+    subtotal: 5999, total: 5999, paymentStatus: 'paid', orderStatus: 'delivered', date: '2026-04-05',
+  },
 ];
 
 export const initialCustomers: Customer[] = [
