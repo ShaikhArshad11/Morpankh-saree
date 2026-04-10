@@ -39,7 +39,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-semibold mb-4">Find Us</h4>
             <a 
-              href="https://www.google.com/maps/@18.5618324,73.9313611,2465m/data=!3m1!1e3?hl=en&entry=ttu&g_ep=EgoyMDI2MDQwNS4wIKXMDSoASAFQAw%3D%3D" 
+              href="https://www.google.com/maps?q=Chhatrapati%20shivaji%20maharaj%20chauk%2C%20Chandan%20Nagar%2C%20Pune%2C%20Maharashtra%20411014" 
               target="_blank" 
               rel="noopener noreferrer"
               className="block w-full h-32 bg-background/10 rounded-lg mb-4 hover:bg-background/20 transition-colors overflow-hidden"
@@ -75,7 +75,7 @@ const Footer = () => {
                 <Youtube className="h-4 w-4" />
               </a>
               <a 
-                href="https://api.whatsapp.com/send/?phone=919096089004&text&type=phone_number&app_absent=0" 
+                href="https://api.whatsapp.com/send/?phone=9182378448433&text&type=phone_number&app_absent=0" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-2 bg-background/10 rounded-full hover:bg-background/20 transition-colors"

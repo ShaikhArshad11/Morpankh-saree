@@ -129,7 +129,7 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         login(data.user, data.token);
         toast({ title: 'Logged in successfully!' });
-        router.push('/profile');
+        router.push('/');
       } else {
         toast({ title: 'Login failed', description: data.error || 'Invalid credentials', variant: 'destructive' });
       }

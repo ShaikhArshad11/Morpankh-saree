@@ -65,26 +65,26 @@ const Contact = () => {
     {
       icon: MapPin,
       label: 'Visit Us',
-      value: 'Shop No. 12, Laxmi Road',
-      sub: 'Pune, Maharashtra 411030',
+      value: 'Shop No 48/3, Baba Pathare Patil Complex,',
+      sub: 'Chatrapati Shivaji Maharaj Chowk, Kharadi Road, Chandan Nagar, Pune : 411014 India',
     },
     {
       icon: Phone,
       label: 'Call Us',
-      value: '+91 90960 89004',
-      sub: 'Mon – Sat, 10am – 7pm',
+      value: '+91 82378448433',
+      sub: 'All Days: 10:00 AM - 10:00 PM',
     },
     {
       icon: Mail,
       label: 'Email Us',
-      value: 'morpankhsaree@gmail.com',
+      value: 'nextlevelluxuries3@gmail.com',
       sub: 'Reply within 24 hours',
     },
     {
       icon: Clock,
       label: 'Store Hours',
-      value: 'Mon – Sat: 10am – 7pm',
-      sub: 'Sunday: 11am – 5pm',
+      value: 'All Days: 10:00 AM - 10:00 PM.',
+      sub: 'India',
     },
   ];
 
@@ -262,7 +262,7 @@ const Contact = () => {
                 <div className="rounded-2xl overflow-hidden border border-border/60 shadow-lg">
                   <iframe
                     title="Store Location"
-                    src="https://www.google.com/maps/@18.5618324,73.9313611,2465m/data=!3m1!1e3?hl=en&entry=ttu&g_ep=EgoyMDI2MDQwNS4wIKXMDSoASAFQAw%3D%3D"
+                    src="https://www.google.com/maps?q=Chhatrapati%20shivaji%20maharaj%20chauk%2C%20Chandan%20Nagar%2C%20Pune%2C%20Maharashtra%20411014&output=embed"
                     width="100%"
                     height="220"
                     style={{ border: 0, display: 'block' }}
@@ -299,7 +299,7 @@ const Contact = () => {
                     Prefer to chat? Reach us on WhatsApp for faster, personalized responses.
                   </p>
                   <a
-                    href="https://api.whatsapp.com/send/?phone=919096089004&text&type=phone_number&app_absent=0"
+                    href="https://api.whatsapp.com/send/?phone=9182378448433&text&type=phone_number&app_absent=0"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
@@ -329,7 +329,18 @@ const Contact = () => {
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   {item.label}
                 </p>
-                <p className="font-semibold text-sm mb-0.5">{item.value}</p>
+                {item.label === 'Visit Us' ? (
+                  <a
+                    href="https://www.google.com/maps?q=Chhatrapati%20shivaji%20maharaj%20chauk%2C%20Chandan%20Nagar%2C%20Pune%2C%20Maharashtra%20411014"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-sm mb-0.5 hover:underline underline-offset-4"
+                  >
+                    {item.value}
+                  </a>
+                ) : (
+                  <p className="font-semibold text-sm mb-0.5">{item.value}</p>
+                )}
                 <p className="text-xs text-muted-foreground">{item.sub}</p>
               </div>
             ))}

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Star, Plus, Send } from 'lucide-react';
+import { ChevronRight, Star, Plus, Send } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import ProductCard from '@/components/ProductCard';
 import { useStore } from '@/store/useStore';
@@ -26,21 +26,6 @@ const Index = () => {
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
   const [approvedReviews, setApprovedReviews] = useState<ApprovedReviewItem[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
-  const catScrollRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll categories
-  useEffect(() => {
-    const el = catScrollRef.current;
-    if (!el) return;
-    const interval = setInterval(() => {
-      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 10) {
-        el.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        el.scrollBy({ left: 220, behavior: 'smooth' });
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
@@ -120,10 +105,6 @@ const Index = () => {
     }
   };
 
-  const scrollCat = (dir: number) => {
-    catScrollRef.current?.scrollBy({ left: dir * 280, behavior: 'smooth' });
-  };
-
   const Section = ({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) => (
     <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
@@ -146,13 +127,11 @@ const Index = () => {
           <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {show.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
-          {items.length > 4 && (
-            <div className="text-center mt-8">
-              <Link href={`/products?highlight=${filterParam}`} className="btn-outline-primary inline-flex items-center gap-2">
-                See More <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-          )}
+          <div className="text-center mt-8">
+            <Link href={`/products?highlight=${filterParam}`} className="btn-outline-primary inline-flex items-center gap-2">
+              View More <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
     );
@@ -225,23 +204,34 @@ const Index = () => {
 
       {/* Category Carousel */}
       <Section title="Shop by Category" subtitle="Explore our curated collection">
-        <div className="relative">
-          <button onClick={() => scrollCat(-1)} className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 bg-card border border-border shadow-lg p-2 rounded-full hover:bg-muted transition-colors hidden md:flex">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div ref={catScrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-2 px-1">
-            {categories.map((cat) => (
-              <Link key={cat.id} href={`/products?category=${cat.slug}`} className="group flex-shrink-0 w-[200px] md:w-[220px] relative aspect-[3/4] rounded-xl overflow-hidden card-hover">
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 to-transparent flex items-end p-4">
-                  <span className="text-background font-display font-semibold text-sm">{cat.name}</span>
+        <div className="relative overflow-hidden">
+          <style>{`
+            @keyframes categoriesMarqueeLTR {
+              0% { transform: translateX(-50%); }
+              100% { transform: translateX(0%); }
+            }
+          `}</style>
+          <div
+            className="flex w-max gap-3 sm:gap-4"
+            style={{ animation: 'categoriesMarqueeLTR 28s linear infinite' }}
+          >
+            {categories.concat(categories).map((cat, idx) => (
+              <Link
+                key={`${cat.id}-${idx}`}
+                href={`/products?category=${cat.slug}`}
+                className="group flex-shrink-0 w-[140px] sm:w-[170px] md:w-[200px] lg:w-[220px] relative aspect-[3/4] rounded-xl overflow-hidden card-hover"
+              >
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 to-transparent flex items-end p-3 sm:p-4">
+                  <span className="text-background font-display font-semibold text-xs sm:text-sm">{cat.name}</span>
                 </div>
               </Link>
             ))}
           </div>
-          <button onClick={() => scrollCat(1)} className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 bg-card border border-border shadow-lg p-2 rounded-full hover:bg-muted transition-colors hidden md:flex">
-            <ChevronRight className="h-5 w-5" />
-          </button>
         </div>
       </Section>
 

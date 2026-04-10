@@ -168,8 +168,6 @@ const Navbar = () => {
                     <>
                       <Link href="/login" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm hover:bg-muted transition-colors">Customer Login</Link>
                       <Link href="/register" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm hover:bg-muted transition-colors">Register</Link>
-                      <div className="border-t border-border my-1" />
-                      <Link href="/admin/login" onClick={() => setUserMenu(false)} className="block px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">Admin Login</Link>
                     </>
                   )}
                 </div>
