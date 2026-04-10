@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { Eye, Search, Calendar, X, RotateCcw } from 'lucide-react';
+import { Eye, Search, Calendar, X, RotateCcw, Download } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 
 type OrderItem = { productId: string; name: string; color: string; size?: string; quantity: number; price: number };
@@ -36,6 +36,11 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const fetchOrders = async (authToken?: string | null) => {
     const tokenToUse = authToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
@@ -56,9 +61,11 @@ const OrdersPage = () => {
       if (res.ok && data?.success && Array.isArray(data.data)) {
         setMyOrders(data.data as Order[]);
       } else {
+        console.log('Orders API response:', data);
         setMyOrders([]);
       }
-    } catch {
+    } catch (error) {
+      console.error('Error fetching orders:', error);
       setMyOrders([]);
     } finally {
       setLoading(false);
@@ -66,6 +73,8 @@ const OrdersPage = () => {
   };
 
   useEffect(() => {
+    if (!isClient) return;
+    
     if (!isLoggedIn || !user) {
       setMyOrders([]);
       setLoading(false);
@@ -74,9 +83,11 @@ const OrdersPage = () => {
 
     const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
     fetchOrders(authToken);
-  }, [isLoggedIn, user, token]);
+  }, [isLoggedIn, user, token, isClient]);
 
   useEffect(() => {
+    if (!isClient) return;
+    
     const handleFocus = () => {
       if (!isLoggedIn || !user) return;
       const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
@@ -92,7 +103,7 @@ const OrdersPage = () => {
         window.removeEventListener('focus', handleFocus);
       }
     };
-  }, [isLoggedIn, user, token]);
+  }, [isLoggedIn, user, token, isClient]);
 
   useEffect(() => {
     let filtered = myOrders;
@@ -145,6 +156,103 @@ const OrdersPage = () => {
     setSearchTerm('');
     setFromDate('');
     setToDate('');
+  };
+
+  const handleInvoicePreview = (order: Order) => {
+    const invoiceHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${order.orderNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+          .invoice { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { color: #333; margin: 0; font-size: 28px; }
+          .header p { color: #666; margin: 5px 0; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .info-section { background: #f9f9f9; padding: 20px; border-radius: 5px; }
+          .info-section h3 { margin: 0 0 15px 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+          .info-section p { margin: 5px 0; color: #555; }
+          .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .items-table th { background: #333; color: white; padding: 12px; text-align: left; }
+          .items-table td { padding: 12px; border-bottom: 1px solid #ddd; }
+          .items-table tr:nth-child(even) { background: #f9f9f9; }
+          .total-section { text-align: right; margin-top: 20px; }
+          .total-section p { margin: 5px 0; font-size: 16px; }
+          .total-section .total { font-size: 20px; font-weight: bold; color: #333; }
+          .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+          @media print { body { background: white; } .invoice { box-shadow: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="invoice">
+          <div class="header">
+            <h1>MORPANKH SAREE</h1>
+            <p>Tax Invoice</p>
+            <p>Order #${order.orderNumber}</p>
+          </div>
+          
+          <div class="info-grid">
+            <div class="info-section">
+              <h3>Billing Details</h3>
+              <p><strong>${order.customerName}</strong></p>
+              <p>${order.customerEmail}</p>
+              <p>${order.customerPhone}</p>
+            </div>
+            <div class="info-section">
+              <h3>Shipping Address</h3>
+              <p>${order.address}</p>
+              <p>${order.city}, ${order.state} - ${order.pincode}</p>
+            </div>
+          </div>
+          
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Color/Size</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.items.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.color}${item.size ? ', ' + item.size : ''}</td>
+                  <td>${item.quantity}</td>
+                  <td>₹${item.price}</td>
+                  <td>₹${item.price * item.quantity}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="total-section">
+            <p>Subtotal: ₹${order.subtotal}</p>
+            <p class="total">Total Amount: ₹${order.total}</p>
+            <p>Payment Status: ${order.paymentStatus}</p>
+            <p>Order Status: ${order.orderStatus}</p>
+          </div>
+          
+          <div class="footer">
+            <p>Thank you for shopping with Morpankh Saree!</p>
+            <p>For any queries, contact us at support@morpankh.com</p>
+            <p>Invoice Date: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(invoiceHTML);
+      newWindow.document.close();
+      newWindow.print();
+    }
   };
 
   if (!isLoggedIn || !user) {
@@ -418,14 +526,23 @@ const OrdersPage = () => {
                           </div>
                         </div>
                         <div className="lg:col-span-1">
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Action</p>
-                          <button
-                            onClick={() => openOrderModal(order)}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white text-sm rounded-xl hover:bg-primary/90 transition-all hover:scale-105"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View
-                          </button>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Actions</p>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => openOrderModal(order)}
+                              className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white text-sm rounded-xl hover:bg-primary/90 transition-all hover:scale-105"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleInvoicePreview(order)}
+                              className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-secondary text-secondary-foreground text-sm rounded-xl hover:bg-secondary/80 transition-all hover:scale-105"
+                            >
+                              <Download className="w-4 h-4" />
+                              Preview Invoice
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
