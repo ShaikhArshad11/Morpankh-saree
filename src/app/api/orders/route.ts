@@ -356,34 +356,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'subtotal and total must be valid numbers' }, { status: 400 });
   }
 
-  const orderNumber = String(b.orderNumber ?? `MPS-${1000 + Math.floor(Math.random() * 9000)}`);
-
-  const now = new Date();
-  const doc: OrderDoc = {
-    userId: decoded.id,
-    orderNumber,
-    customerName,
-    customerEmail,
-    customerPhone,
-    address,
-    city,
-    state,
-    pincode,
-    items,
-    subtotal,
-    total,
-    paymentStatus,
-    orderStatus,
-    date,
-    createdAt: now,
-    updatedAt: now,
-  };
-
   const client = new MongoClient(uri);
   try {
     await client.connect();
     const db = client.db('morpankh_saree');
     const orders = db.collection<OrderDoc>('orders');
+
+    let orderNumber: string;
+    if (b.orderNumber) {
+      orderNumber = String(b.orderNumber);
+    } else {
+      // Get last order number and increment
+      const lastOrder = await orders.findOne({}, { sort: { createdAt: -1 } });
+      const lastOrderNumber = lastOrder?.orderNumber || 'ORD-00000';
+      const lastNumber = parseInt(lastOrderNumber.replace('ORD-', '')) || 0;
+      const nextNumber = lastNumber + 1;
+      orderNumber = `ORD-${nextNumber.toString().padStart(5, '0')}`;
+    }
+
+    const now = new Date();
+    const doc: OrderDoc = {
+      userId: decoded.id,
+      orderNumber,
+      customerName,
+      customerEmail,
+      customerPhone,
+      address,
+      city,
+      state,
+      pincode,
+      items,
+      subtotal,
+      total,
+      paymentStatus,
+      orderStatus,
+      date,
+      createdAt: now,
+      updatedAt: now,
+    };
 
     const result = await orders.insertOne(doc);
 

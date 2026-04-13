@@ -1,14 +1,94 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Package, ShoppingCart, Users, DollarSign, TrendingUp, AlertTriangle, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
+import { initialOrders } from '@/data/mockData';
+
+// Define order type
+type Order = {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  items: { productId: string; name: string; image?: string; color: string; size?: string; quantity: number; price: number }[];
+  subtotal: number;
+  total: number;
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  orderStatus: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  date: string;
+};
+
+
 
 const AdminDashboard = () => {
-  const { products, orders, customers, reviews } = useStore();
+  const { products, customers, reviews } = useStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch real orders from database
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('/api/admin/orders', {
+          headers: {
+            'Authorization': 'Bearer admin-token'
+          }
+        });
+        const result = await response.json();
+        if (response.ok && result?.success && Array.isArray(result.data)) {
+          // Use real data if available
+          setOrders(result.data);
+        } else {
+          // Fallback to mock data if API fails or returns no data
+          console.log('Using mock data fallback');
+          setOrders(initialOrders);
+        }
+      } catch (error) {
+        console.log('API error, using mock data fallback:', error);
+        // Fallback to mock data on network error
+        setOrders(initialOrders);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+  
+  // Sort orders by date (most recent first)
+  const sortedOrders = [...orders].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Most recent first
+  });
+  
+  // Helper function for consistent date formatting
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
+  
+  // Helper function for today's date comparison
+  const isToday = (dateString: string) => {
+    const orderDate = new Date(dateString);
+    const today = new Date();
+    return orderDate.toDateString() === today.toDateString();
+  };
+  
   const totalRevenue = orders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0);
-  const todayOrders = orders.filter((o) => o.date === new Date().toISOString().split('T')[0]);
+  const todayOrders = orders.filter((o) => isToday(o.date));
   const todayRevenue = todayOrders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0);
   const lowStock = products.filter((p) => p.stock <= 10 && !p.hidden);
   const pendingReviews = reviews.filter((r) => !r.approved);
@@ -69,20 +149,37 @@ const AdminDashboard = () => {
         {/* Recent Orders */}
         <div className="bg-card rounded-xl p-6 border border-border">
           <h2 className="font-display text-lg font-semibold mb-4">Recent Orders</h2>
-          <div className="space-y-3">
-            {orders.slice(0, 5).map((order) => (
-              <div key={order.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div>
-                  <p className="font-medium text-sm">{order.orderNumber}</p>
-                  <p className="text-xs text-muted-foreground">{order.customerName}</p>
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sortedOrders.slice(0, 5).map((order) => (
+                <div key={order.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors rounded-lg px-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{order.orderNumber}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(order.orderStatus)}`}>{order.orderStatus}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{order.customerName}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(order.date)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-sm">₹{order.total.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">{order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-sm">₹{order.total.toLocaleString()}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(order.orderStatus)}`}>{order.orderStatus}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+          {sortedOrders.length > 5 && (
+            <div className="mt-4 text-center">
+              <Link href="/admin/orders" className="text-sm text-primary hover:underline">
+                View all {sortedOrders.length} orders →
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Low Stock */}
