@@ -20,14 +20,11 @@ const AdminAnnouncementBar = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
-
   const load = async () => {
-    if (!token) return;
     setLoading(true);
     try {
       const res = await fetch('/api/admin/announcement-bar', {
-        headers: { authorization: `Bearer ${token}` },
+        headers: { authorization: 'Bearer admin-token' },
       });
       const data = (await res.json()) as ApiResponse;
 
@@ -50,14 +47,13 @@ const AdminAnnouncementBar = () => {
   }, []);
 
   const save = async () => {
-    if (!token) return;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/announcement-bar', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          authorization: `Bearer ${token}`,
+          authorization: 'Bearer admin-token',
         },
         body: JSON.stringify({ enabled: state.enabled, text: state.text }),
       });
@@ -83,7 +79,7 @@ const AdminAnnouncementBar = () => {
           <h1 className="font-display text-2xl font-bold">Announcement Bar</h1>
           <p className="text-sm text-muted-foreground">Edit the black badge above the navbar</p>
         </div>
-        <button onClick={save} disabled={saving || loading || !token} className="btn-primary text-sm py-2 px-4 disabled:opacity-50">
+        <button onClick={save} disabled={saving || loading} className="btn-primary text-sm py-2 px-4 disabled:opacity-50">
           {saving ? 'Saving...' : 'Save'}
         </button>
       </div>

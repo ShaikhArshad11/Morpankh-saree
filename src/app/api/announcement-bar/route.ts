@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type AnnouncementDoc = {
   key: 'announcement_bar';
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
   if (!uri) {
     return NextResponse.json(
       { enabled: true, text: 'Free Shipping On Orders Above 1499' },
-      { status: 200 }
+      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   }
 
@@ -30,18 +31,18 @@ export async function GET(request: NextRequest) {
     if (!record) {
       return NextResponse.json(
         { enabled: true, text: 'Free Shipping On Orders Above 1499' },
-        { status: 200 }
+        { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
       );
     }
 
     return NextResponse.json(
       { enabled: Boolean(record.enabled), text: String(record.text || '') },
-      { status: 200 }
+      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   } catch {
     return NextResponse.json(
       { enabled: true, text: 'Free Shipping On Orders Above 1499' },
-      { status: 200 }
+      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
     );
   } finally {
     await client.close();

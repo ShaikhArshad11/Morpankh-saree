@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type AnnouncementDoc = {
   key: 'announcement_bar';
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
         enabled: record ? Boolean(record.enabled) : true,
         text: record ? String(record.text || '') : 'Free Shipping On Orders Above 1499',
       },
-    });
+    }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ success: false, error: msg }, { status: 500 });

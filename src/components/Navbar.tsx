@@ -34,7 +34,7 @@ const Navbar = () => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch('/api/announcement-bar');
+        const res = await fetch('/api/announcement-bar', { cache: 'no-store' });
         const data = await res.json();
         if (!mounted) return;
         if (res.ok && data && typeof data.enabled === 'boolean' && typeof data.text === 'string') {
@@ -60,34 +60,53 @@ const Navbar = () => {
 
   return (
     <div className="sticky top-0 z-50">
-      {announcement?.enabled ? (
-        <div className="bg-black text-white">
-          <style>{`
-            @keyframes announcement-marquee-ltr {
-              from { transform: translateX(-50%); }
-              to { transform: translateX(0%); }
-            }
-          `}</style>
-          <div className="container mx-auto px-4 py-2 overflow-hidden">
-            <div
-              className="inline-flex items-center gap-8 whitespace-nowrap"
-              style={{
-                width: 'max-content',
-                animation: 'announcement-marquee-ltr 18s linear infinite',
-              }}
-            >
-              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
-                <Send className="h-4 w-4" />
-                <span>{announcement.text}</span>
-              </div>
-              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium" aria-hidden="true">
-                <Send className="h-4 w-4" />
-                <span>{announcement.text}</span>
-              </div>
-            </div>
+  {announcement?.enabled ? (
+    <div className="bg-black text-white overflow-hidden">
+      <style>{`
+        @keyframes marquee-scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .marquee-track {
+          display: inline-flex;
+          align-items: center;
+          gap: 40px;
+          white-space: nowrap;
+          width: max-content;
+          animation: marquee-scroll 22s linear infinite;
+        }
+        .marquee-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+      <div className="py-2">
+        <div className="marquee-track">
+          {/* First copy */}
+          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+            <Send className="h-4 w-4 shrink-0" />
+            <span>{announcement.text}</span>
           </div>
+          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
+          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+            <Send className="h-4 w-4 shrink-0" />
+            <span>{announcement.text}</span>
+          </div>
+          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
+          {/* Duplicate copy — required for seamless looping */}
+          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+            <Send className="h-4 w-4 shrink-0" />
+            <span>{announcement.text}</span>
+          </div>
+          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
+          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+            <Send className="h-4 w-4 shrink-0" />
+            <span>{announcement.text}</span>
+          </div>
+          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
         </div>
-      ) : null}
+      </div>
+    </div>
+  ) : null}
 
       <nav className="bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="container mx-auto px-4 flex items-center justify-between">
