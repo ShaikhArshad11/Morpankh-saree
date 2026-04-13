@@ -212,25 +212,31 @@ const Index = () => {
             }
           `}</style>
           <div
-            className="flex w-max gap-3 sm:gap-4"
-            style={{ animation: 'categoriesMarqueeLTR 28s linear infinite' }}
+            className="group flex w-max gap-3 sm:gap-4"
           >
-            {categories.concat(categories).map((cat, idx) => (
-              <Link
-                key={`${cat.id}-${idx}`}
-                href={`/products?category=${cat.slug}`}
-                className="group flex-shrink-0 w-[140px] sm:w-[170px] md:w-[200px] lg:w-[220px] relative aspect-[3/4] rounded-xl overflow-hidden card-hover"
-              >
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 to-transparent flex items-end p-3 sm:p-4">
-                  <span className="text-background font-display font-semibold text-xs sm:text-sm">{cat.name}</span>
-                </div>
-              </Link>
-            ))}
+            <div
+              className="flex w-max gap-3 sm:gap-4 group-hover:[animation-play-state:paused]"
+              style={{ animation: 'categoriesMarqueeLTR 28s linear infinite' }}
+            >
+              {categories.concat(categories).map((cat, idx) => (
+                <Link
+                  key={`${cat.id}-${idx}`}
+                  href={`/products?category=${cat.slug}`}
+                  className="group/item flex-shrink-0 w-[120px] sm:w-[140px] md:w-[160px] lg:w-[170px] relative aspect-square rounded-full overflow-hidden card-hover border border-border/30"
+                >
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 to-transparent flex items-end justify-center p-3">
+                    <span className="text-background font-display font-semibold text-xs sm:text-sm text-center leading-tight">
+                      {cat.name}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </Section>

@@ -38,16 +38,25 @@ const Footer = () => {
           {/* Find Us + Social */}
           <div>
             <h4 className="font-display text-lg font-semibold mb-4">Find Us</h4>
-            <a 
-              href="https://www.google.com/maps?q=Chhatrapati%20shivaji%20maharaj%20chauk%2C%20Chandan%20Nagar%2C%20Pune%2C%20Maharashtra%20411014" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block w-full h-32 bg-background/10 rounded-lg mb-4 hover:bg-background/20 transition-colors overflow-hidden"
-            >
-              <div className="w-full h-full flex items-center justify-center text-background/40 text-sm hover:text-background/60 transition-colors">
-                📍 View on Google Maps
-              </div>
-            </a>
+            <div className="relative w-full h-32 rounded-lg mb-4 overflow-hidden bg-background/10">
+              <iframe
+                title="Footer Store Location"
+                src="https://www.google.com/maps?q=Chhatrapati%20shivaji%20maharaj%20chauk%2C%20Chandan%20Nagar%2C%20Pune%2C%20Maharashtra%20411014&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0, display: 'block' }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <a
+                href="https://www.google.com/maps?q=Chhatrapati%20shivaji%20maharaj%20chauk%2C%20Chandan%20Nagar%2C%20Pune%2C%20Maharashtra%20411014"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 flex items-center justify-center bg-foreground/40 hover:bg-foreground/25 transition-colors"
+              >
+                <span className="text-background text-xs font-semibold">📍 View on Google Maps</span>
+              </a>
+            </div>
             <h4 className="font-display text-lg font-semibold mb-3">Follow Us</h4>
             <div className="flex gap-3">
               <a 

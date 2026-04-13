@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Db, MongoClient, WithId, Document } from 'mongodb';
-
-let client: MongoClient;
-let db: Db;
-
-async function getDatabase() {
-  if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
-    await client.connect();
-    db = client.db('morpankh_saree');
-  }
-  return db;
-}
+import { WithId, Document } from 'mongodb';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 function getSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -46,8 +34,18 @@ function getVariantImages(value: unknown): string[] {
 }
 
 export async function GET(_request: NextRequest) {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return NextResponse.json(
+      { success: false, error: 'MONGODB_URI is not configured on the server' },
+      { status: 500 }
+    );
+  }
+
+  const client = await getMongoClient(uri);
   try {
-    const database = await getDatabase();
+    await client.connect();
+    const database = client.db(getDatabaseName());
     const raw = await database
       .collection('products')
       .find({ isActive: { $ne: false } })
@@ -111,5 +109,7 @@ export async function GET(_request: NextRequest) {
       { success: false, error: 'Failed to fetch products' },
       { status: 500 }
     );
+  } finally {
+    await client.close();
   }
 }

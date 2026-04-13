@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, Db, WithId, Document } from 'mongodb';
-
-let client: MongoClient;
-let db: Db;
-
-async function getDatabase() {
-  if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
-    await client.connect();
-    db = client.db('morpankh_saree');
-  }
-  return db;
-}
+import { WithId, Document } from 'mongodb';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 export async function GET(request: NextRequest) {
+  void request;
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    return NextResponse.json(
+      { success: false, error: 'MONGODB_URI is not configured on the server' },
+      { status: 500 }
+    );
+  }
+
+  const client = await getMongoClient(uri);
   try {
-    const database = await getDatabase();
+    await client.connect();
+    const database = client.db(getDatabaseName());
     const categories = await database.collection('categories')
       .find({})
       .sort({ createdAt: -1 })
@@ -56,5 +55,7 @@ export async function GET(request: NextRequest) {
       { success: false, error: 'Failed to fetch categories' },
       { status: 500 }
     );
+  } finally {
+    await client.close();
   }
 }
