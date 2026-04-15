@@ -13,7 +13,7 @@ const menuItems = [
   { label: 'Orders', to: '/admin/orders', icon: ClipboardList },
   { label: 'Messages', to: '/admin/messages', icon: Mail },
   { label: 'Reviews', to: '/admin/reviews', icon: MessageSquare },
-  { label: 'Inventory', to: '/admin/inventory', icon: Warehouse },
+  // { label: 'Inventory', to: '/admin/inventory', icon: Warehouse },
   { label: 'Announcement', to: '/admin/announcement-bar', icon: Megaphone },
   { label: 'Export Data', to: '/admin/export', icon: Download },
   { label: 'Logout', to: '#', icon: LogOut, isLogout: true },

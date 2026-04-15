@@ -208,7 +208,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="max-w-6xl mx-auto fade-up-3">
+          {/* <div className="max-w-6xl mx-auto fade-up-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {galleryImages.map((image) => (
                 <div
@@ -244,7 +244,109 @@ export default function Page() {
                 </div>
               ))}
             </div>
+          </div> */}
+
+      <div className="max-w-6xl mx-auto fade-up-3 px-4">
+  <style>{`
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .pin-card {
+      animation: cardReveal 0.5s ease both;
+    }
+    .pin-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+      z-index: 10;
+    }
+    .pin-card img {
+      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .pin-card:hover img {
+      transform: scale(1.1);
+    }
+    .pin-overlay {
+      background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .pin-card:hover .pin-overlay {
+      opacity: 1;
+    }
+    .pin-label {
+      transform: translateY(8px);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .pin-card:hover .pin-label {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .pin-save {
+      opacity: 0;
+      transform: scale(0.85);
+      transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s;
+      pointer-events: none;
+    }
+    .pin-card:hover .pin-save {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+  `}</style>
+
+  {/* Pinterest / Mosaic Grid */}
+  <div
+    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 auto-rows-[140px] gap-3"
+    style={{ gridAutoFlow: 'dense' }}
+  >
+    {galleryImages.map((image, index) => {
+      const layouts = [
+        "row-span-2",
+        "",
+        "",
+        "row-span-2 md:col-span-2",
+        "row-span-2",
+        "",
+        "",
+        "md:col-span-2",
+      ];
+
+      return (
+        <div
+          key={image.id}
+          onClick={() => setSelectedImage(image.id)}
+          className={`pin-card relative overflow-hidden rounded-2xl cursor-pointer ${
+            layouts[index % layouts.length]
+          }`}
+          style={{
+            animationDelay: `${(index % 8) * 65}ms`,
+            transition: "transform 0.3s ease, box-shadow 0.3s ease",
+          }}
+        >
+          <Image
+            src={image.src}
+            alt={image.alt}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+
+          {/* Gradient overlay */}
+          <div className="pin-overlay absolute inset-0" />
+
+          {/* Label (optional — uses image.alt as fallback) */}
+          <div className="pin-label absolute bottom-0 left-0 right-0 p-3">
+            <p className="text-white text-sm font-semibold leading-tight drop-shadow">
+              {image.alt}
+            </p>
           </div>
+        </div>
+      );
+    })}
+  </div>
+</div>
         </div>
 
         {/* Image Modal */}

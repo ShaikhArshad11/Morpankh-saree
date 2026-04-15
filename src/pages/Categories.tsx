@@ -1,12 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import PublicLayout from '@/components/PublicLayout';
 import { Category } from '@/data/mockData';
-import { Loader2, ShoppingBag } from 'lucide-react';
+import { Loader2, ShoppingBag, Search } from 'lucide-react';
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredCategories = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) => {
+      const name = String(c.name || '').toLowerCase();
+      const slug = String(c.slug || '').toLowerCase();
+      return name.includes(q) || slug.includes(q);
+    });
+  }, [categories, searchQuery]);
 
   useEffect(() => {
     fetchCategories();
@@ -152,8 +163,23 @@ const Categories = () => {
             </div>
           ) : (
             <div className="max-w-6xl mx-auto mb-10 fade-up-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {categories.map((cat, index) => (
+              {/* Search Bar */}
+              <div className="relative max-w-lg mx-auto mb-8 fade-up-3">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search categories..."
+                  className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              {filteredCategories.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">No categories found.</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredCategories.map((cat, index) => (
                   <Link 
                     key={cat.id} 
                     href={`/products?category=${cat.slug}`} 
@@ -181,8 +207,9 @@ const Categories = () => {
                       </div>
                     </div>
                   </Link>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -20,6 +20,8 @@ interface OrderDoc {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
   address: string;
   city: string;
   state: string;
@@ -328,6 +330,8 @@ export async function POST(request: NextRequest) {
   const customerName = String(b.customerName ?? '').trim();
   const customerEmail = String(b.customerEmail ?? '').trim();
   const customerPhone = String(b.customerPhone ?? '').trim();
+  const razorpayOrderId = typeof b.razorpayOrderId === 'string' ? b.razorpayOrderId.trim() : undefined;
+  const razorpayPaymentId = typeof b.razorpayPaymentId === 'string' ? b.razorpayPaymentId.trim() : undefined;
   const address = String(b.address ?? '').trim();
   const city = String(b.city ?? '').trim();
   const state = String(b.state ?? '').trim();
@@ -381,6 +385,8 @@ export async function POST(request: NextRequest) {
       customerName,
       customerEmail,
       customerPhone,
+      razorpayOrderId,
+      razorpayPaymentId,
       address,
       city,
       state,

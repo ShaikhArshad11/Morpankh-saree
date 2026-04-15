@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Check, Trash2, Star } from 'lucide-react';
+import { Check, Trash2, Star, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
@@ -23,6 +23,8 @@ const AdminReviews = () => {
 
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const authToken =
     token ||
@@ -58,6 +60,8 @@ const AdminReviews = () => {
 
   const approveReview = async (id: string) => {
     if (!authToken) return;
+    if (approvingId || deletingId) return;
+    setApprovingId(id);
     try {
       const res = await fetch(`/api/admin/reviews/${id}`, {
         method: 'PATCH',
@@ -75,11 +79,15 @@ const AdminReviews = () => {
       await loadReviews();
     } catch {
       toast({ title: 'Failed to approve review', variant: 'destructive' });
+    } finally {
+      setApprovingId(null);
     }
   };
 
   const deleteReview = async (id: string) => {
     if (!authToken) return;
+    if (approvingId || deletingId) return;
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/admin/reviews/${id}`, {
         method: 'DELETE',
@@ -96,6 +104,8 @@ const AdminReviews = () => {
       await loadReviews();
     } catch {
       toast({ title: 'Failed to delete review', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -138,11 +148,29 @@ const AdminReviews = () => {
                   <p className="text-sm text-muted-foreground">{r.comment}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button onClick={() => { approveReview(r._id); }} className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors" title="Approve">
-                    <Check className="h-4 w-4 text-primary" />
+                  <button
+                    onClick={() => { approveReview(r._id); }}
+                    disabled={Boolean(approvingId || deletingId)}
+                    className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Approve"
+                  >
+                    {approvingId === r._id ? (
+                      <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
                   </button>
-                  <button onClick={() => { deleteReview(r._id); }} className="p-2 bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors" title="Delete">
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                  <button
+                    onClick={() => { deleteReview(r._id); }}
+                    disabled={Boolean(approvingId || deletingId)}
+                    className="p-2 bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Delete"
+                  >
+                    {deletingId === r._id ? (
+                      <Loader2 className="h-4 w-4 text-destructive animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -168,8 +196,16 @@ const AdminReviews = () => {
               </div>
               <p className="text-sm text-muted-foreground">{r.comment}</p>
             </div>
-            <button onClick={() => { deleteReview(r._id); }} className="p-2 hover:bg-muted rounded-lg transition-colors shrink-0">
-              <Trash2 className="h-4 w-4 text-destructive" />
+            <button
+              onClick={() => { deleteReview(r._id); }}
+              disabled={Boolean(approvingId || deletingId)}
+              className="p-2 hover:bg-muted rounded-lg transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deletingId === r._id ? (
+                <Loader2 className="h-4 w-4 text-destructive animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 text-destructive" />
+              )}
             </button>
           </div>
         ))}

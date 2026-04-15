@@ -73,7 +73,8 @@ const Navbar = () => {
           gap: 40px;
           white-space: nowrap;
           width: max-content;
-          animation: marquee-scroll 22s linear infinite;
+          animation: marquee-scroll 50s linear infinite;
+          will-change: transform;
         }
         .marquee-track:hover {
           animation-play-state: paused;
@@ -81,28 +82,20 @@ const Navbar = () => {
       `}</style>
       <div className="py-2">
         <div className="marquee-track">
-          {/* First copy */}
-          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
-            <Send className="h-4 w-4 shrink-0" />
-            <span>{announcement.text}</span>
-          </div>
-          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
-          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
-            <Send className="h-4 w-4 shrink-0" />
-            <span>{announcement.text}</span>
-          </div>
-          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
-          {/* Duplicate copy — required for seamless looping */}
-          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
-            <Send className="h-4 w-4 shrink-0" />
-            <span>{announcement.text}</span>
-          </div>
-          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
-          <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
-            <Send className="h-4 w-4 shrink-0" />
-            <span>{announcement.text}</span>
-          </div>
-          <span className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />
+          {Array.from({ length: 12 }).flatMap((_, i) => [
+            <div key={`a-${i}`} className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+              <Send className="h-4 w-4 shrink-0" />
+              <span>{announcement.text}</span>
+            </div>,
+            <span key={`a-dot-${i}`} className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />,
+          ])}
+          {Array.from({ length: 12 }).flatMap((_, i) => [
+            <div key={`b-${i}`} className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium">
+              <Send className="h-4 w-4 shrink-0" />
+              <span>{announcement.text}</span>
+            </div>,
+            <span key={`b-dot-${i}`} className="inline-block w-1 h-1 rounded-full bg-white/30 shrink-0" />,
+          ])}
         </div>
       </div>
     </div>

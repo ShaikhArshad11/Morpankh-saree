@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload, FileText, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
@@ -82,6 +82,8 @@ const AdminProducts = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsProduct, setDetailsProduct] = useState<DbProduct | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>({
     name: '', 
     sku: '', 
@@ -208,6 +210,7 @@ const AdminProducts = () => {
   };
 
   const handleSave = async () => {
+    if (submitting) return;
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
     const data: Partial<DbProduct> = {
       name: form.name, 
@@ -235,6 +238,7 @@ const AdminProducts = () => {
       sareeLength: form.sareeLength,
     };
     
+    setSubmitting(true);
     try {
       let response;
       if (editing) {
@@ -277,10 +281,14 @@ const AdminProducts = () => {
     } catch (error) {
       console.error('Save error:', error);
       toast({ title: 'Failed to save product', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       const response = await fetch(`/api/admin/products/${id}`, {
         method: 'DELETE',
@@ -309,6 +317,8 @@ const AdminProducts = () => {
     } catch (error) {
       console.error('Delete error:', error);
       toast({ title: 'Failed to delete product', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -680,9 +690,18 @@ const AdminProducts = () => {
 
               {/* Buttons */}
               <div className="flex gap-3 pt-4">
-                <button onClick={() => setModalOpen(false)} className="flex-1 btn-outline-primary text-sm py-2">Cancel</button>
-                <button onClick={handleSave} className="flex-1 btn-primary text-sm py-2">
-                  {editing ? 'Update Product' : 'Add Product'}
+                <button onClick={() => setModalOpen(false)} disabled={submitting} className="flex-1 btn-outline-primary text-sm py-2 disabled:opacity-50">
+                  Cancel
+                </button>
+                <button onClick={handleSave} disabled={submitting} className="flex-1 btn-primary text-sm py-2 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    editing ? 'Update Product' : 'Add Product'
+                  )}
                 </button>
               </div>
             </div>
@@ -882,8 +901,19 @@ const AdminProducts = () => {
             <h3 className="font-display text-lg font-semibold mb-2">Delete Product?</h3>
             <p className="text-sm text-muted-foreground mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 btn-outline-primary text-sm py-2">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} disabled={Boolean(deletingId)} className="flex-1 btn-outline-primary text-sm py-2 disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={() => handleDelete(confirmDelete)} disabled={Boolean(deletingId)} className="flex-1 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                {deletingId ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
             </div>
           </div>
         </div>

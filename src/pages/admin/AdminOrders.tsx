@@ -3,7 +3,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { useEffect, useState } from 'react';
-import { Eye, Printer, Trash2, X, RefreshCw } from 'lucide-react';
+import { Eye, Printer, Trash2, X, RefreshCw, Loader2 } from 'lucide-react';
 import { initialOrders } from '@/data/mockData';
 
 type Order = {
@@ -13,6 +13,8 @@ type Order = {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -30,6 +32,7 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -174,10 +177,12 @@ const AdminOrders = () => {
                     <select
                       aria-label="Change order status"
                       value={order.orderStatus}
+                      disabled={Boolean(updatingId)}
                       onChange={async (e) => {
                         const id = order.id || order._id;
                         if (!id) return;
                         const newStatus = e.target.value as OrderStatus;
+                        setUpdatingId(id);
                         try {
                           const res = await fetch('/api/admin/orders', {
                             method: 'PUT',
@@ -195,12 +200,20 @@ const AdminOrders = () => {
                           }
                         } catch (error) {
                           console.error('Error updating order status:', error);
+                        } finally {
+                          setUpdatingId(null);
                         }
                       }}
-                      className="text-xs border border-border rounded px-2 py-1 bg-background w-full"
+                      className="text-xs border border-border rounded px-2 py-1 bg-background w-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'] as const).map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
+                    {updatingId === (order.id || order._id) ? (
+                      <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Updating...
+                      </span>
+                    ) : null}
                   </td>
                   <td className="p-4 text-muted-foreground">{order.date}</td>
                   <td className="p-4 text-right">
@@ -244,6 +257,8 @@ const AdminOrders = () => {
                     <div className="flex justify-between text-muted-foreground"><span>Date</span><span>{selectedOrder.date}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>Status</span><span className={`text-xs px-2 py-1 rounded-full ${statusColor(selectedOrder.orderStatus)}`}>{selectedOrder.orderStatus}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>Payment</span><span className={`text-xs px-2 py-1 rounded-full ${statusColor(selectedOrder.paymentStatus)}`}>{selectedOrder.paymentStatus}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>Razorpay Order ID</span><span className="max-w-[180px] truncate" title={selectedOrder.razorpayOrderId || ''}>{selectedOrder.razorpayOrderId || '—'}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>Razorpay Payment ID</span><span className="max-w-[180px] truncate" title={selectedOrder.razorpayPaymentId || ''}>{selectedOrder.razorpayPaymentId || '—'}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>Total</span><span className="font-medium">₹{selectedOrder.total.toLocaleString()}</span></div>
                   </div>
                 </div>
