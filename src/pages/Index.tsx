@@ -24,6 +24,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
+  const [categorySearch, setCategorySearch] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [approvedReviews, setApprovedReviews] = useState<ApprovedReviewItem[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
@@ -76,6 +77,9 @@ const Index = () => {
   const saleProducts = visibleProducts.filter((p) => p.isSale);
   const premiumSarees = visibleProducts.filter((p) => p.isPremium);
   const trendingSarees = visibleProducts.filter((p) => p.isTrending);
+  const filteredCategories = categories.filter((cat) =>
+    cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
   const handleReviewSubmit = async () => {
     if (reviewSubmitting) return;
     if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
@@ -209,24 +213,44 @@ const Index = () => {
 
       {/* Category Carousel */}
       <Section title="Shop by Category" subtitle="Explore our curated collection">
+        <div className="mb-6">
+          <div className="max-w-md mx-auto">
+            <input
+              key="category-search"
+              type="text"
+              placeholder="Search categories..."
+              value={categorySearch}
+              onChange={(e) => setCategorySearch(e.target.value)}
+              onMouseDown={(e) => e.preventDefault()}
+              className="w-full px-4 py-2.5 border border-border rounded-xl bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+              autoFocus
+            />
+          </div>
+        </div>
         <div className="relative overflow-hidden">
-          <style>{`
-            @keyframes categoriesMarqueeLTR {
-              0% { transform: translateX(-50%); }
-              100% { transform: translateX(0%); }
-            }
-            .categories-marquee:hover .categories-track {
-              animation-play-state: paused;
-            }
-          `}</style>
-          <div
-            className="categories-marquee flex w-max gap-3 sm:gap-4"
-          >
-            <div
-              className="categories-track flex w-max gap-3 sm:gap-4"
-              style={{ animation: 'categoriesMarqueeLTR 28s linear infinite' }}
-            >
-              {categories.concat(categories).map((cat, idx) => (
+          {filteredCategories.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No categories found matching "{categorySearch}"</p>
+            </div>
+          ) : (
+            <>
+              <style>{`
+                @keyframes categoriesMarqueeLTR {
+                  0% { transform: translateX(-50%); }
+                  100% { transform: translateX(0%); }
+                }
+                .categories-marquee:hover .categories-track {
+                  animation-play-state: paused;
+                }
+              `}</style>
+              <div
+                className="categories-marquee flex w-max gap-3 sm:gap-4"
+              >
+                <div
+                  className="categories-track flex w-max gap-3 sm:gap-4"
+                  style={{ animation: 'categoriesMarqueeLTR 28s linear infinite' }}
+                >
+                  {filteredCategories.concat(filteredCategories).map((cat, idx) => (
                 <Link
                   key={`${cat.id}-${idx}`}
                   href={`/products?category=${cat.slug}`}
@@ -246,6 +270,8 @@ const Index = () => {
               ))}
             </div>
           </div>
+            </>
+          )}
         </div>
       </Section>
 

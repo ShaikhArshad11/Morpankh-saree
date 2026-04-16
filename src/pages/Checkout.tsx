@@ -95,6 +95,8 @@ const Checkout = () => {
           date: new Date().toISOString().split('T')[0],
         };
 
+        console.log('Checkout - token from store:', token);
+        console.log('Checkout - token from localStorage:', typeof window !== 'undefined' ? localStorage.getItem('token') : null);
         const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
         if (!authToken) {
           toast({ title: 'Please login to place order', variant: 'destructive' });
@@ -170,6 +172,7 @@ const Checkout = () => {
                 razorpayPaymentId: typeof r.razorpay_payment_id === 'string' ? r.razorpay_payment_id : undefined,
               };
 
+              console.log('POST /api/orders authToken:', authToken);
               const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {

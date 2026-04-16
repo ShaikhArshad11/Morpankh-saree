@@ -206,7 +206,11 @@ export const useStore = create<StoreState>()(
       login: (user, token, isAdmin = false) => {
 
         const loginTime = Date.now();
-        localStorage.setItem('adminToken', token);
+        if (isAdmin) {
+          localStorage.setItem('adminToken', token);
+        } else {
+          localStorage.setItem('token', token);
+        }
         localStorage.setItem('loginTime', loginTime.toString());
         localStorage.setItem('isAdmin', isAdmin.toString());
 
@@ -238,9 +242,9 @@ export const useStore = create<StoreState>()(
         });
       },
       initializeAuth: () => {
-        const token = localStorage.getItem('adminToken');
         const loginTime = localStorage.getItem('loginTime');
         const isAdmin = localStorage.getItem('isAdmin') === 'true';
+        const token = isAdmin ? localStorage.getItem('adminToken') : localStorage.getItem('token');
         
         if (token && loginTime) {
           const loginTimestamp = parseInt(loginTime);
@@ -248,25 +252,25 @@ export const useStore = create<StoreState>()(
           const twentyFourHours = 24 * 60 * 60 * 1000;
           
           if ((currentTime - loginTimestamp) < twentyFourHours) {
-            // Restore admin session
+            // Restore session
             set({
               isLoggedIn: true,
-              userName: 'Admin',
-              user: {
+              userName: isAdmin ? 'Admin' : (JSON.parse(atob(token.split('.')[1]))?.name || 'User'),
+              user: isAdmin ? {
                 id: 'admin',
                 name: 'Admin',
                 email: 'admin@morpankh.com',
                 verified: true
-              },
+              } : JSON.parse(atob(token.split('.')[1])),
               token,
               isAdmin
             });
           } else {
             // Token expired, clean up
             localStorage.removeItem('adminToken');
+            localStorage.removeItem('token');
             localStorage.removeItem('loginTime');
             localStorage.removeItem('isAdmin');
-            localStorage.removeItem('token');
           }
         }
       },
@@ -283,6 +287,15 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'morpankh-store',
+      partialize: (state) => ({
+        cart: state.cart,
+        wishlist: state.wishlist,
+        isLoggedIn: state.isLoggedIn,
+        userName: state.userName,
+        user: state.user,
+        token: state.token,
+        isAdmin: state.isAdmin,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state?.isLoggedIn && !state.isAdmin) {
           state.loadWishlist();
