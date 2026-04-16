@@ -117,57 +117,75 @@ export default function Page() {
             <h1 className="text-5xl font-bold mb-4" style={{ color: 'hsl(var(--primary))' }} />
           </div>
 
-          <div className="max-w-3xl mx-auto mb-12 fade-up-2">
-            <div
-              className="rounded-2xl p-10 border border-border/60 shadow-xl backdrop-blur-xl"
-              style={{ background: 'hsl(var(--card)/0.85)' }}
-            >
-              <div className="text-center">
-                <div className="relative inline-block mb-6">
-                  <div
-                    className="absolute inset-0 rounded-full spin-ring"
-                    style={{
-                      border: '2px dashed hsl(var(--primary)/0.25)',
-                      margin: '-12px',
-                    }}
-                  />
-                  <div
-                    className="w-24 h-24 rounded-2xl mx-auto flex items-center justify-center border border-primary/20 shadow-inner logo-pulse"
-                    style={{ background: 'hsl(var(--primary)/0.08)' }}
-                  >
-                    <Image src={logo} alt="Morpankh Logo" height={72} width={72} className="rounded-xl" />
+          <div className="max-w-6xl mx-auto mb-12 fade-up-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              <div
+                className="rounded-2xl p-10 border border-border/60 shadow-xl backdrop-blur-xl h-full"
+                style={{ background: 'hsl(var(--card)/0.85)' }}
+              >
+                <div className="text-center">
+                  <div className="relative inline-block mb-6">
+                    <div
+                      className="absolute inset-0 rounded-full spin-ring"
+                      style={{
+                        border: '2px dashed hsl(var(--primary)/0.25)',
+                        margin: '-12px',
+                      }}
+                    />
+                    <div
+                      className="w-24 h-24 rounded-2xl mx-auto flex items-center justify-center border border-primary/20 shadow-inner logo-pulse"
+                      style={{ background: 'hsl(var(--primary)/0.08)' }}
+                    >
+                      <Image src={logo} alt="Morpankh Logo" height={72} width={72} className="rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold" style={{ color: 'hsl(var(--primary))' }}>
+                      Our Mission
+                    </h2>
+                    <p className="text-base text-muted-foreground leading-relaxed">
+                      Morpankh Saree is more than just a brand — it is a tribute to India's rich textile heritage.
+                      From Banarasi silks to Paithani masterpieces, every saree represents generations of artistry.
+                    </p>
+                    <div
+                      className="text-left space-y-2 text-sm rounded-xl my-4 p-5 border border-primary/15"
+                      style={{ background: 'hsl(var(--primary)/0.06)' }}
+                    >
+                      {[
+                        'Authentic handcrafted sarees',
+                        'Direct from skilled artisans across India',
+                        'Fair opportunities for traditional weavers',
+                        "Preserving India's textile heritage",
+                      ].map((item) => (
+                        <div key={item} className="flex items-center gap-2 text-foreground">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ background: 'hsl(var(--primary))' }}
+                          />
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      We work directly with skilled artisans across India, ensuring authenticity, quality, and fair opportunities for traditional weavers.
+                    </p>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold" style={{ color: 'hsl(var(--primary))' }}>
-                    Our Mission
-                  </h2>
-                  <p className="text-base text-muted-foreground leading-relaxed">
-                    Morpankh Saree is more than just a brand — it is a tribute to India's rich textile heritage.
-                    From Banarasi silks to Paithani masterpieces, every saree represents generations of artistry.
-                  </p>
-                  <div
-                    className="text-left space-y-2 text-sm rounded-xl my-4 p-5 border border-primary/15"
-                    style={{ background: 'hsl(var(--primary)/0.06)' }}
-                  >
-                    {[
-                      'Authentic handcrafted sarees',
-                      'Direct from skilled artisans across India',
-                      'Fair opportunities for traditional weavers',
-                      "Preserving India's textile heritage",
-                    ].map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-foreground">
-                        <span
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ background: 'hsl(var(--primary))' }}
-                        />
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    We work directly with skilled artisans across India, ensuring authenticity, quality, and fair opportunities for traditional weavers.
-                  </p>
+              </div>
+
+              <div
+                className="rounded-2xl border border-border/60 shadow-xl backdrop-blur-xl overflow-hidden h-full"
+                style={{ background: 'hsl(var(--card)/0.85)' }}
+              >
+                <div className="relative w-full h-full min-h-[420px]">
+                  <Image
+                    src="/model1.jpeg"
+                    alt="Model"
+                    fill
+                    className="object-cover object-top"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                  />
                 </div>
               </div>
             </div>

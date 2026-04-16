@@ -14,6 +14,7 @@ const AdminCategories = () => {
   const [form, setForm] = useState({ name: '', slug: '', image: '' });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -112,6 +113,8 @@ const AdminCategories = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       const response = await fetch(`/api/admin/categories/${id}`, {
         method: 'DELETE',
@@ -128,6 +131,8 @@ const AdminCategories = () => {
     } catch (error) {
       console.error('Error deleting category:', error);
       toast({ title: 'Error', description: 'Failed to delete category', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -161,7 +166,17 @@ const AdminCategories = () => {
               </div>
               <div className="flex gap-1">
                 <button onClick={() => openEdit(cat)} className="p-2 hover:bg-muted rounded-lg transition-colors"><Pencil className="h-4 w-4 text-primary" /></button>
-                <button onClick={() => handleDelete(cat.id)} className="p-2 hover:bg-muted rounded-lg transition-colors"><Trash2 className="h-4 w-4 text-destructive" /></button>
+                <button
+                  onClick={() => handleDelete(cat.id)}
+                  disabled={Boolean(deletingId || submitting)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deletingId === cat.id ? (
+                    <Loader2 className="h-4 w-4 text-destructive animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  )}
+                </button>
               </div>
             </div>
           </div>

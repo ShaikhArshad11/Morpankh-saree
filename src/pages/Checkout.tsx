@@ -5,9 +5,47 @@ import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+declare global {
+  interface Window {
+    Razorpay?: unknown;
+  }
+}
+
+type RazorpaySuccessResponse = {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayFailureResponse = {
+  error?: {
+    description?: string;
+  };
+};
+
+const loadRazorpayScript = (): Promise<boolean> =>
+  new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if (window.Razorpay) return resolve(true);
+
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true));
+      existing.addEventListener('error', () => resolve(false));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
 const Checkout = () => {
   const router = useRouter();
-  const { cart, clearCart, addOrder, user, token } = useStore();
+  const { cart, clearCart, user, token } = useStore();
   const [form, setForm] = useState({
     name: user?.name || '',
     phone: user?.mobile || '',
@@ -52,8 +90,8 @@ const Checkout = () => {
           })),
           subtotal,
           total: subtotal,
-          paymentStatus: 'paid' as const,
-          orderStatus: 'confirmed' as const,
+          paymentStatus: 'pending' as const,
+          orderStatus: 'pending' as const,
           date: new Date().toISOString().split('T')[0],
         };
 
@@ -65,31 +103,126 @@ const Checkout = () => {
           return;
         }
 
-        const res = await fetch('/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify(orderPayload),
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data?.success) {
-          const msg = data?.error || 'Failed to place order';
-          toast({ title: msg, variant: 'destructive' });
-
-          const localOrder = { id: Date.now().toString(), ...orderPayload };
-          addOrder(localOrder);
-          clearCart();
+        const scriptOk = await loadRazorpayScript();
+        if (!scriptOk) {
+          toast({ title: 'Razorpay failed to load', description: 'Please try again.', variant: 'destructive' });
           setProcessing(false);
-          router.push('/order-success');
           return;
         }
 
-        clearCart();
-        setProcessing(false);
-        router.push('/order-success');
+        const createOrderRes = await fetch('/api/payments/razorpay/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: subtotal,
+            receipt: orderPayload.orderNumber,
+          }),
+        });
+        const createOrderData = await createOrderRes.json();
+        if (!createOrderRes.ok || !createOrderData?.success) {
+          const msg = createOrderData?.error || 'Failed to initialize payment';
+          toast({ title: msg, variant: 'destructive' });
+          setProcessing(false);
+          return;
+        }
+
+        const { orderId, amount, currency, keyId } = createOrderData.data;
+
+        const options = {
+          key: keyId,
+          amount,
+          currency,
+          name: 'Morpankh Saree',
+          description: `Order ${orderPayload.orderNumber}`,
+          order_id: orderId,
+          prefill: {
+            name: customerName,
+            email: customerEmail,
+            contact: customerPhone,
+          },
+          notes: {
+            orderNumber: orderPayload.orderNumber,
+          },
+          theme: {
+            color: '#7c3aed',
+          },
+          handler: async (response: unknown) => {
+            try {
+              const r = response as Partial<RazorpaySuccessResponse>;
+              const verifyRes = await fetch('/api/payments/razorpay/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(r),
+              });
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || !verifyData?.success) {
+                const msg = verifyData?.error || 'Payment verification failed';
+                toast({ title: msg, variant: 'destructive' });
+                setProcessing(false);
+                return;
+              }
+
+              const paidOrderPayload = {
+                ...orderPayload,
+                paymentStatus: 'paid' as const,
+                orderStatus: 'confirmed' as const,
+                razorpayOrderId: typeof r.razorpay_order_id === 'string' ? r.razorpay_order_id : undefined,
+                razorpayPaymentId: typeof r.razorpay_payment_id === 'string' ? r.razorpay_payment_id : undefined,
+              };
+
+              const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  authorization: `Bearer ${authToken}`,
+                },
+                body: JSON.stringify(paidOrderPayload),
+              });
+
+              const data = await res.json();
+              if (!res.ok || !data?.success) {
+                const msg = data?.error || 'Failed to place order';
+                toast({ title: msg, variant: 'destructive' });
+                setProcessing(false);
+                return;
+              }
+
+              clearCart();
+              setProcessing(false);
+              router.push('/order-success');
+            } catch {
+              toast({ title: 'Order failed', description: 'Network error. Please try again.', variant: 'destructive' });
+              setProcessing(false);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setProcessing(false);
+            },
+          },
+        };
+
+        if (!window.Razorpay || typeof window.Razorpay !== 'function') {
+          toast({ title: 'Razorpay is not available', description: 'Please refresh and try again.', variant: 'destructive' });
+          setProcessing(false);
+          return;
+        }
+
+        const RazorpayCtor = window.Razorpay as new (opts: unknown) => {
+          open: () => void;
+          on: (event: string, cb: (resp: unknown) => void) => void;
+        };
+
+        const rz = new RazorpayCtor(options);
+        rz.on('payment.failed', (resp: unknown) => {
+          const r = resp as RazorpayFailureResponse;
+          const msg = r?.error?.description || 'Payment failed';
+          toast({ title: msg, variant: 'destructive' });
+          setProcessing(false);
+        });
+        rz.open();
+        return;
+
       } catch {
         toast({ title: 'Order failed', description: 'Network error. Please try again.', variant: 'destructive' });
         setProcessing(false);

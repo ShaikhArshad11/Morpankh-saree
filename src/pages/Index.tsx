@@ -24,6 +24,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ name: '', rating: 5, comment: '' });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [approvedReviews, setApprovedReviews] = useState<ApprovedReviewItem[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
@@ -76,11 +77,13 @@ const Index = () => {
   const premiumSarees = visibleProducts.filter((p) => p.isPremium);
   const trendingSarees = visibleProducts.filter((p) => p.isTrending);
   const handleReviewSubmit = async () => {
+    if (reviewSubmitting) return;
     if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
       toast({ title: 'Please fill all fields', variant: 'destructive' });
       return;
     }
 
+    setReviewSubmitting(true);
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
@@ -102,6 +105,8 @@ const Index = () => {
       }
     } catch {
       toast({ title: 'Failed to submit review', variant: 'destructive' });
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -210,12 +215,15 @@ const Index = () => {
               0% { transform: translateX(-50%); }
               100% { transform: translateX(0%); }
             }
+            .categories-marquee:hover .categories-track {
+              animation-play-state: paused;
+            }
           `}</style>
           <div
-            className="group flex w-max gap-3 sm:gap-4"
+            className="categories-marquee flex w-max gap-3 sm:gap-4"
           >
             <div
-              className="flex w-max gap-3 sm:gap-4 group-hover:[animation-play-state:paused]"
+              className="categories-track flex w-max gap-3 sm:gap-4"
               style={{ animation: 'categoriesMarqueeLTR 28s linear infinite' }}
             >
               {categories.concat(categories).map((cat, idx) => (
@@ -329,9 +337,31 @@ const Index = () => {
                 <textarea value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} rows={3} className="w-full border border-border rounded-lg px-4 py-2.5 bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Share your experience..." />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setReviewModal(false)} className="flex-1 btn-outline-primary text-sm py-2">Cancel</button>
-                <button onClick={handleReviewSubmit} className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm py-2">
-                  <Send className="h-4 w-4" /> Submit
+                <button
+                  onClick={() => setReviewModal(false)}
+                  disabled={reviewSubmitting}
+                  className="flex-1 btn-outline-primary text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReviewSubmit}
+                  disabled={reviewSubmitting}
+                  className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {reviewSubmitting ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" /> Submit
+                    </>
+                  )}
                 </button>
               </div>
             </div>
