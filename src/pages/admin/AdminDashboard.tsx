@@ -90,7 +90,7 @@ const AdminDashboard = () => {
   const totalRevenue = orders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0);
   const todayOrders = orders.filter((o) => isToday(o.date));
   const todayRevenue = todayOrders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.total, 0);
-  const lowStock = products.filter((p) => p.stock <= 10 && !p.hidden);
+  const lowStock = products.filter((p) => p.stock < 5 && !p.hidden);
   const pendingReviews = reviews.filter((r) => !r.approved);
 
   const StatCard = ({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string; color: string }) => (
@@ -198,9 +198,9 @@ const AdminDashboard = () => {
                     <p className="text-xs text-muted-foreground">{p.colors[0]} · {p.sku}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold text-sm ${p.stock <= 5 ? 'text-destructive' : 'text-gold'}`}>{p.stock} left</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.stock <= 5 ? 'bg-destructive/20 text-destructive' : 'bg-gold/20 text-gold'}`}>
-                      {p.stock <= 5 ? 'Critical' : 'Low'}
+                    <p className={`font-bold text-sm ${p.stock <= 2 ? 'text-destructive' : 'text-gold'}`}>{p.stock} left</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.stock <= 2 ? 'bg-destructive/20 text-destructive' : 'bg-gold/20 text-gold'}`}>
+                      {p.stock <= 2 ? 'Critical' : 'Low'}
                     </span>
                   </div>
                 </div>
