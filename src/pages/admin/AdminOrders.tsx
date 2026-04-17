@@ -3,7 +3,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { useEffect, useState } from 'react';
-import { Eye, Printer, Trash2, X, RefreshCw, Loader2 } from 'lucide-react';
+import { Eye, Printer, Trash2, X, RefreshCw, Loader2, Search } from 'lucide-react';
 import { initialOrders } from '@/data/mockData';
 
 type Order = {
@@ -30,9 +30,23 @@ type Order = {
 const AdminOrders = () => {
   const { updateOrderStatus, products } = useStore();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [paginatingLoading, setPaginatingLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  
+  // Filter states
+  const [orderNumberFilter, setOrderNumberFilter] = useState('');
+  const [customerNameFilter, setCustomerNameFilter] = useState('');
+  const [productFilter, setProductFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -71,30 +85,113 @@ const AdminOrders = () => {
     setOrders((prev) => prev.filter((order) => order.id !== id && order._id !== id));
   };
 
-  const fetchOrders = async () => {
-    setLoading(true);
+  const resetFilters = () => {
+    setOrderNumberFilter('');
+    setCustomerNameFilter('');
+    setProductFilter('all');
+    setDateFilter('');
+    setStatusFilter('all');
+    setCurrentPage(1);
+  };
+
+  const applyFilters = (ordersList: Order[]) => {
+    return ordersList.filter(order => {
+      // Order number filter
+      if (orderNumberFilter && !order.orderNumber.toLowerCase().includes(orderNumberFilter.toLowerCase())) {
+        return false;
+      }
+      
+      // Customer name filter
+      if (customerNameFilter && !order.customerName.toLowerCase().includes(customerNameFilter.toLowerCase())) {
+        return false;
+      }
+      
+      // Product filter
+      if (productFilter !== 'all') {
+        const hasProduct = order.items?.some(item => item.productId === productFilter);
+        if (!hasProduct) return false;
+      }
+      
+      // Date filter
+      if (dateFilter) {
+        const orderDate = new Date(order.date);
+        const filterDate = new Date(dateFilter);
+        if (orderDate.toDateString() !== filterDate.toDateString()) {
+          return false;
+        }
+      }
+      
+      // Status filter
+      if (statusFilter !== 'all' && order.orderStatus !== statusFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  const fetchOrders = async (isPagination = false) => {
+    if (isPagination) {
+      setPaginatingLoading(true);
+    } else {
+      setLoading(true);
+    }
+    
     try {
-      const res = await fetch('/api/admin/orders', {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        pageSize: '10',
+      });
+      
+      const res = await fetch(`/api/admin/orders?${params}`, {
         headers: { authorization: 'Bearer admin-token' },
       });
       const data = await res.json();
+      let ordersList: Order[] = [];
+      let totalOrders = 0;
+      
       if (res.ok && data?.success && Array.isArray(data.data)) {
-        setOrders(data.data);
+        ordersList = data.data;
+        totalOrders = data.pagination?.total || data.data.length;
+        setTotalPages(data.pagination?.totalPages || Math.ceil(totalOrders / 10));
       } else {
         console.log('Using mock data fallback for orders page');
-        setOrders(initialOrders);
+        ordersList = initialOrders;
+        totalOrders = initialOrders.length;
+        setTotalPages(Math.ceil(totalOrders / 10));
       }
+      
+      setOrders(ordersList);
+      setTotal(totalOrders);
+      setFilteredOrders(applyFilters(ordersList));
     } catch (error) {
       console.log('API error, using mock data fallback for orders page:', error);
       setOrders(initialOrders);
+      setTotal(initialOrders.length);
+      setTotalPages(Math.ceil(initialOrders.length / 10));
+      setFilteredOrders(applyFilters(initialOrders));
     } finally {
-      setLoading(false);
+      if (isPagination) {
+        setPaginatingLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    setFilteredOrders(applyFilters(orders));
+  }, [orderNumberFilter, customerNameFilter, productFilter, dateFilter, statusFilter, orders]);
+
+  useEffect(() => {
+    if (currentPage > 1) {
+      fetchOrders(true);
+    }
+  }, [currentPage]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -117,7 +214,7 @@ const AdminOrders = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold">Orders</h1>
         <button
-          onClick={fetchOrders}
+          onClick={() => fetchOrders()}
           disabled={loading}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -125,10 +222,106 @@ const AdminOrders = () => {
           Refresh
         </button>
       </div>
+      
+      {/* Filters Section */}
+      <div className="bg-card rounded-xl border border-border p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Order Number Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Order Number</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search order..."
+                value={orderNumberFilter}
+                onChange={(e) => setOrderNumberFilter(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+          
+          {/* Customer Name Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Customer Name</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search customer..."
+                value={customerNameFilter}
+                onChange={(e) => setCustomerNameFilter(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+          
+          {/* Product Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Product</label>
+            <select
+              value={productFilter}
+              onChange={(e) => setProductFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="all">All Products</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Date Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Date</label>
+            <input
+              type="date"
+              placeholder="dd-mm-yyyy"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        
+        {/* Reset Filters Button */}
+        <div className="mt-4">
+          <button
+            onClick={resetFilters}
+            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+          >
+            Reset Filters
+          </button>
+        </div>
+      </div>
       {loading && orders.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-4 text-sm text-muted-foreground">Loading orders...</div>
       ) : null}
-      <div className="bg-card rounded-xl border border-border overflow-x-auto">
+      <div className="bg-card rounded-xl border border-border overflow-x-auto relative">
+        {paginatingLoading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/50">
             <tr>
@@ -143,7 +336,7 @@ const AdminOrders = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => {
+            {filteredOrders.map((order) => {
               const firstItem = order.items?.[0];
               const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
               return (
@@ -235,6 +428,34 @@ const AdminOrders = () => {
           </tbody>
         </table>
       </div>
+      
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, total)} of {total} orders
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1 || paginatingLoading}
+              className="px-3 py-1 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-1 text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages || paginatingLoading}
+              className="px-3 py-1 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

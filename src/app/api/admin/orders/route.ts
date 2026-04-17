@@ -209,11 +209,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+    const skip = (page - 1) * pageSize;
+
     const database = await getDatabase();
+    
+    // Get total count for pagination
+    const total = await database.collection('orders').countDocuments({});
+    
+    // Get paginated orders
     const orders = await database
       .collection('orders')
       .find({})
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
       .toArray();
 
     const transformed = (orders as WithId<Document>[]).map((o) => ({
@@ -222,7 +234,20 @@ export async function GET(request: NextRequest) {
       id: o._id.toString(),
     }));
 
-    return NextResponse.json({ success: true, data: transformed });
+    const totalPages = Math.ceil(total / pageSize);
+
+    return NextResponse.json({ 
+      success: true, 
+      data: transformed,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error fetching admin orders:', msg);
