@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Db, MongoClient, WithId, Document } from 'mongodb';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 let client: MongoClient;
 let db: Db;
@@ -13,10 +14,10 @@ function isAdminRequest(request: NextRequest) {
 
 async function getDatabase() {
   if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/morpankh_saree';
+    client = await getMongoClient(uri);
     await client.connect();
-    db = client.db('morpankh_saree');
+    db = client.db(getDatabaseName());
   }
   return db;
 }
@@ -58,11 +59,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const pageSize = Math.max(1, Math.min(100, Number(searchParams.get('pageSize')) || 6));
+
     const database = await getDatabase();
+
+    const total = await database.collection('products').countDocuments();
+
+    const skip = (page - 1) * pageSize;
     const products = await database
       .collection('products')
       .find({})
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
       .toArray();
 
     const transformed = (products as WithId<Document>[]).map((p) => ({
@@ -70,7 +81,18 @@ export async function GET(request: NextRequest) {
       _id: p._id.toString(),
     }));
 
-    return NextResponse.json({ success: true, data: transformed });
+    const totalPages = Math.ceil(total / pageSize);
+
+    return NextResponse.json({
+      success: true,
+      data: transformed,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+      },
+    });
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(

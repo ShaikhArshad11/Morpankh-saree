@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, X, Upload, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 import { Category } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
+import { uploadToR2 } from '@/lib/r2Upload';
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -15,6 +16,7 @@ const AdminCategories = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   useEffect(() => {
     fetchCategories();
@@ -44,6 +46,7 @@ const AdminCategories = () => {
     setEditing(null); 
     setForm({ name: '', slug: '', image: '' }); 
     setImageFile(null);
+    setUploadProgress(0);
     setModalOpen(true); 
   };
   
@@ -51,6 +54,7 @@ const AdminCategories = () => {
     setEditing(c); 
     setForm({ name: c.name, slug: c.slug, image: c.image }); 
     setImageFile(null);
+    setUploadProgress(0);
     setModalOpen(true); 
   };
 
@@ -75,16 +79,25 @@ const AdminCategories = () => {
     }
 
     setSubmitting(true);
+    setUploadProgress(0);
     
     try {
+      let imageUrlToUse = form.image;
+
+      if (imageFile) {
+        imageUrlToUse = await uploadToR2(imageFile, {
+          folder: 'categories',
+          maxBytes: 10 * 1024 * 1024,
+          onProgress: (pct) => setUploadProgress(pct),
+        });
+      }
+
       const formData = new FormData();
       formData.append('name', form.name);
       formData.append('slug', form.slug || form.name.toLowerCase().replace(/\s+/g, '-'));
-      
-      if (imageFile) {
-        formData.append('image', imageFile);
-      } else if (form.image && !form.image.startsWith('data:')) {
-        formData.append('imageUrl', form.image);
+
+      if (imageUrlToUse && !imageUrlToUse.startsWith('data:')) {
+        formData.append('imageUrl', imageUrlToUse);
       }
 
       const url = editing ? `/api/admin/categories/${editing.id}` : '/api/admin/categories';
@@ -109,6 +122,7 @@ const AdminCategories = () => {
       toast({ title: 'Error', description: 'Failed to save category', variant: 'destructive' });
     } finally {
       setSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -211,6 +225,9 @@ const AdminCategories = () => {
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {editing ? 'Update' : 'Add'} Category
               </button>
+              {submitting && uploadProgress > 0 && uploadProgress < 100 && (
+                <p className="text-xs text-muted-foreground text-center">Uploading: {uploadProgress}%</p>
+              )}
             </div>
           </div>
         </div>

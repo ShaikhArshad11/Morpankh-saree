@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, X, Eye, EyeOff, Upload, FileText, Loader2 } from 
 import AdminLayout from '@/components/AdminLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
+import { uploadToR2 } from '@/lib/r2Upload';
 
 // Database interfaces
 interface ColorVariant {
@@ -84,6 +85,12 @@ const AdminProducts = () => {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploadingColorIndex, setUploadingColorIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [paginatingLoading, setPaginatingLoading] = useState(false);
   const [form, setForm] = useState<ProductForm>({
     name: '', 
     sku: '', 
@@ -96,11 +103,22 @@ const AdminProducts = () => {
 
   const totalStock = form.colors.reduce((sum, color) => sum + Number(color.stock || 0), 0);
 
-  // Fetch data from database
+  // Short timer to hide skeleton quickly on refresh
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch categories
+    const timer = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch data from database
+  const fetchData = async (isPagination = false) => {
+    if (isPagination) {
+      setPaginatingLoading(true);
+    } else {
+      setLoading(true);
+    }
+    try {
+      // Fetch categories (only on initial load)
+      if (!isPagination) {
         const categoriesRes = await fetch('/api/admin/categories', {
           headers: { authorization: 'Bearer admin-token' }
         });
@@ -108,25 +126,34 @@ const AdminProducts = () => {
           const categoriesData = await categoriesRes.json();
           setCategories(categoriesData.data || []);
         }
-
-        // Fetch products
-        const productsRes = await fetch('/api/admin/products', {
-          headers: { authorization: 'Bearer admin-token' }
-        });
-        if (productsRes.ok) {
-          const productsData = await productsRes.json();
-          setProducts(productsData.data || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-        toast({ title: 'Failed to load data', variant: 'destructive' });
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchData();
+      // Fetch products
+      const productsRes = await fetch(`/api/admin/products?page=${currentPage}&pageSize=6`, {
+        headers: { authorization: 'Bearer admin-token' }
+      });
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        setProducts(productsData.data || []);
+        setTotalPages(productsData.pagination?.totalPages || 1);
+        setTotal(productsData.pagination?.total || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      toast({ title: 'Failed to load data', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+      setPaginatingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(false);
   }, []);
+
+  useEffect(() => {
+    fetchData(true);
+  }, [currentPage]);
 
   const openAddModal = () => {
     setEditing(null);
@@ -189,28 +216,46 @@ const AdminProducts = () => {
     setForm({ ...form, colors: form.colors.filter((_, i) => i !== index) });
   };
 
-  const uploadColorImage = (colorIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadColorImage = async (colorIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const img = reader.result as string;
+
+    setUploadingColorIndex(colorIndex);
+    setUploadProgress(0);
+
+    try {
+      const url = await uploadToR2(file, {
+        folder: 'products',
+        maxBytes: 10 * 1024 * 1024,
+        onProgress: (pct) => setUploadProgress(pct),
+      });
+
       setForm((prev) => {
         const nextColors = [...prev.colors];
         const current = nextColors[colorIndex];
         if (!current) return prev;
         nextColors[colorIndex] = {
           ...current,
-          images: [...(current.images || []), img],
+          images: [url],
         };
         return { ...prev, colors: nextColors };
       });
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({ title: 'Image upload failed', variant: 'destructive' });
+    } finally {
+      setUploadingColorIndex(null);
+      setUploadProgress(0);
+      e.target.value = '';
+    }
   };
 
   const handleSave = async () => {
     if (submitting) return;
+    if (uploadingColorIndex !== null) {
+      toast({ title: 'Please wait for image upload to finish', variant: 'destructive' });
+      return;
+    }
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
     const data: Partial<DbProduct> = {
       name: form.name, 
@@ -222,7 +267,7 @@ const AdminProducts = () => {
       colors: form.colors.map((c) => ({
         colorName: c.colorName,
         stock: Number(c.stock),
-        images: c.images,
+        images: (c.images || []).filter((img) => typeof img === 'string' && !img.startsWith('data:')),
       })),
       description: form.description, 
       fabric: form.fabric, 
@@ -265,16 +310,19 @@ const AdminProducts = () => {
       
       if (response.ok) {
         // Refresh the products list
-        const productsRes = await fetch('/api/admin/products', {
+        const productsRes = await fetch(`/api/admin/products?page=${currentPage}&pageSize=6`, {
           headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();
           setProducts(productsData.data || []);
+          setTotalPages(productsData.pagination?.totalPages || 1);
+          setTotal(productsData.pagination?.total || 0);
         }
         
         toast({ title: editing ? 'Product updated' : 'Product added' });
         setModalOpen(false);
+        setCurrentPage(1);
       } else {
         toast({ title: result.error || 'Failed to save product', variant: 'destructive' });
       }
@@ -301,12 +349,14 @@ const AdminProducts = () => {
       
       if (response.ok) {
         // Refresh the products list
-        const productsRes = await fetch('/api/admin/products', {
+        const productsRes = await fetch(`/api/admin/products?page=${currentPage}&pageSize=6`, {
           headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();
           setProducts(productsData.data || []);
+          setTotalPages(productsData.pagination?.totalPages || 1);
+          setTotal(productsData.pagination?.total || 0);
         }
         
         setConfirmDelete(null);
@@ -337,12 +387,14 @@ const AdminProducts = () => {
       
       if (response.ok) {
         // Refresh products list
-        const productsRes = await fetch('/api/admin/products', {
+        const productsRes = await fetch(`/api/admin/products?page=${currentPage}&pageSize=6`, {
           headers: { authorization: 'Bearer admin-token' }
         });
         if (productsRes.ok) {
           const productsData = await productsRes.json();
           setProducts(productsData.data || []);
+          setTotalPages(productsData.pagination?.totalPages || 1);
+          setTotal(productsData.pagination?.total || 0);
         }
         
         toast({ title: p.hidden ? 'Product is now visible' : 'Product hidden from store' });
@@ -362,26 +414,54 @@ const AdminProducts = () => {
         <button onClick={openAddModal} className="btn-primary flex items-center gap-2 text-sm py-2"><Plus className="h-4 w-4" /> Add Product</button>
       </div>
 
-      <div className="bg-card rounded-xl border border-border overflow-x-auto">
+      <div className="bg-card rounded-xl border border-border overflow-x-auto relative">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">Loading products...</div>
+          <div className="p-4">
+            <div className="space-y-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-3 border-b border-border last:border-0">
+                  <div className="w-10 h-12 bg-muted rounded animate-pulse" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
+                    <div className="h-3 bg-muted rounded w-1/5 animate-pulse" />
+                  </div>
+                  <div className="h-4 bg-muted rounded w-12 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-8 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-10 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-16 animate-pulse" />
+                  <div className="flex gap-1">
+                    <div className="w-8 h-8 bg-muted rounded animate-pulse" />
+                    <div className="w-8 h-8 bg-muted rounded animate-pulse" />
+                    <div className="w-8 h-8 bg-muted rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="text-left p-4">Product</th>
-                <th className="text-left p-4">Price</th>
-                <th className="text-left p-4">Offer%</th>
-                <th className="text-left p-4">Stock</th>
-                <th className="text-left p-4">Status</th>
-                <th className="text-right p-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p._id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+          <>
+            {paginatingLoading && (
+              <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <div className="text-sm text-muted-foreground">Loading page...</div>
+                </div>
+              </div>
+            )}
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/50">
+                <tr>
+                  <th className="text-left p-4">Product</th>
+                  <th className="text-left p-4">Price</th>
+                  <th className="text-left p-4">Offer%</th>
+                  <th className="text-left p-4">Stock</th>
+                  <th className="text-left p-4">Status</th>
+                  <th className="text-right p-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr key={p._id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="p-4 flex items-center gap-3">
                     <img
                       src={p.colors?.[0]?.images?.[0] || p.images?.[0] || '/placeholder.svg'}
@@ -423,6 +503,33 @@ const AdminProducts = () => {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between p-4 border-t border-border">
+            <div className="text-sm text-muted-foreground">
+              Showing {products.length} of {total} products
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1 || paginatingLoading}
+                className="px-3 py-1 border border-border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm px-2">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || paginatingLoading}
+                className="px-3 py-1 border border-border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+          </>
         )}
       </div>
 
@@ -543,8 +650,17 @@ const AdminProducts = () => {
                           )}
                           <label className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg text-sm cursor-pointer hover:bg-muted/80 transition-colors">
                             <Upload className="h-4 w-4" /> Upload Image
-                            <input type="file" accept="image/*" onChange={(e) => uploadColorImage(index, e)} className="hidden" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={submitting || uploadingColorIndex !== null}
+                              onChange={(e) => void uploadColorImage(index, e)}
+                              className="hidden"
+                            />
                           </label>
+                          {uploadingColorIndex === index && (
+                            <div className="text-xs text-muted-foreground">Uploading: {uploadProgress}%</div>
+                          )}
                         </div>
                       </div>
                     </div>

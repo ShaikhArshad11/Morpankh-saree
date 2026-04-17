@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, Db, ObjectId } from 'mongodb';
-import { uploadImage, deleteImage, getPublicIdFromUrl } from '@/lib/cloudinary';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 let client: MongoClient;
 let db: Db;
 
 async function getDatabase() {
   if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/morpankh_saree';
+    client = await getMongoClient(uri);
     await client.connect();
-    db = client.db('morpankh_saree');
+    db = client.db(getDatabaseName());
   }
   return db;
 }
@@ -21,7 +21,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const formData = await request.formData();
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
-    const imageFile = formData.get('image') as File;
     const imageUrl = formData.get('imageUrl') as string;
 
     if (!name) {
@@ -43,25 +42,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     let imageUrlToUse = existingCategory.image;
-    
-    // Upload new image to Cloudinary if file is provided
-    if (imageFile && imageFile.size > 0) {
-      try {
-        // Delete old image from Cloudinary if it's a Cloudinary URL
-        if (existingCategory.image && existingCategory.image.includes('cloudinary')) {
-          const publicId = getPublicIdFromUrl(existingCategory.image);
-          await deleteImage(publicId).catch(console.error);
-        }
-        
-        imageUrlToUse = await uploadImage(imageFile);
-      } catch (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        return NextResponse.json(
-          { success: false, error: 'Failed to upload image' },
-          { status: 500 }
-        );
-      }
-    } else if (imageUrl && imageUrl !== existingCategory.image) {
+
+    if (imageUrl && imageUrl !== existingCategory.image) {
       // If URL is provided and different from existing, use it
       imageUrlToUse = imageUrl;
     }
@@ -116,12 +98,6 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
         { success: false, error: 'Category not found' },
         { status: 404 }
       );
-    }
-
-    // Delete image from Cloudinary if it's a Cloudinary URL
-    if (category.image && category.image.includes('cloudinary')) {
-      const publicId = getPublicIdFromUrl(category.image);
-      await deleteImage(publicId).catch(console.error);
     }
 
     // Delete category from database

@@ -18,6 +18,7 @@ type ApprovedReviewItem = {
 
 const Index = () => {
   const products = useStore((s) => s.products);
+  const loadProducts = useStore((s) => s.loadProducts);
   const isLoggedIn = useStore((s) => s.isLoggedIn);
   const userName = useStore((s) => s.userName);
 
@@ -38,6 +39,10 @@ const Index = () => {
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
 
   // ─── Fetch approved reviews ────────────────────────────────────────────────
   useEffect(() => {

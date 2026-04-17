@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Db, MongoClient, ObjectId, WithId, Document } from 'mongodb';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 let client: MongoClient;
 let db: Db;
@@ -13,10 +14,10 @@ function isAdminRequest(request: NextRequest) {
 
 async function getDatabase() {
   if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/morpankh_saree';
+    client = await getMongoClient(uri);
     await client.connect();
-    db = client.db('morpankh_saree');
+    db = client.db(getDatabaseName());
   }
   return db;
 }

@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MongoClient, Db, ObjectId } from 'mongodb';
-import { uploadImage } from '@/lib/cloudinary';
+import { getDatabaseName, getMongoClient } from '@/lib/database';
 
 let client: MongoClient;
 let db: Db;
 
 async function getDatabase() {
   if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/morpankh_saree';
+    client = await getMongoClient(uri);
     await client.connect();
-    db = client.db('morpankh_saree');
+    db = client.db(getDatabaseName());
   }
   return db;
 }
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
-    const imageFile = formData.get('image') as File;
     const imageUrl = formData.get('imageUrl') as string;
 
     if (!name) {
@@ -45,20 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let imageUrlToUse = imageUrl;
-    
-    // Upload image to Cloudinary if file is provided
-    if (imageFile && imageFile.size > 0) {
-      try {
-        imageUrlToUse = await uploadImage(imageFile);
-      } catch (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        return NextResponse.json(
-          { success: false, error: 'Failed to upload image' },
-          { status: 500 }
-        );
-      }
-    }
+    const imageUrlToUse = imageUrl;
 
     // Generate slug if not provided
     const finalSlug = slug || name.toLowerCase().replace(/\s+/g, '-');
