@@ -25,6 +25,7 @@ interface DbProduct {
   colors: ColorVariant[];
   description: string;
   fabric: string;
+  size?: string;
   hidden?: boolean;
   images?: string[];
   sku?: string;
@@ -62,6 +63,7 @@ type ProductForm = {
 
   description: string;
   fabric: string;
+  size: string;
   hidden: boolean;
   tags: string[];
   featured: boolean;
@@ -95,7 +97,7 @@ const AdminProducts = () => {
     name: '', 
     sku: '', 
     originalPrice: '', salePrice: '', category: '', stock: '', colors: [],
-    description: '', fabric: '', hidden: false,
+    description: '', fabric: '', size: '', hidden: false,
     tags: [], featured: false, isNew: false, isPremium: false,
     isTrending: false, rating: 0, reviews: 0,
     sareeLength: '',
@@ -162,7 +164,7 @@ const AdminProducts = () => {
       name: '', 
       sku: '', 
       originalPrice: '', salePrice: '', category: categories[0]?.slug || '', stock: '', colors: [],
-      description: '', fabric: '', hidden: false,
+      description: '', fabric: '', size: '', hidden: false,
       tags: [], featured: false, isNew: false, isPremium: false,
       isTrending: false, rating: 0, reviews: 0,
       sareeLength: '',
@@ -186,6 +188,7 @@ const AdminProducts = () => {
       })),
       description: p.description,
       fabric: p.fabric,
+      size: p.size || '',
       hidden: p.hidden || false,
       tags: p.tags || [],
       featured: p.featured || false,
@@ -271,6 +274,7 @@ const AdminProducts = () => {
       })),
       description: form.description, 
       fabric: form.fabric, 
+      size: form.size,
       hidden: form.hidden, 
       sku: form.sku,
       tags: form.tags,
@@ -685,11 +689,25 @@ const AdminProducts = () => {
                     placeholder="Enter fabric type"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Size (s, m, l, xl, xxl)</label>
+                  <select
+                    value={form.size}
+                    onChange={(e) => setForm({ ...form, size: e.target.value })}
+                    className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Select Size</option>
+                    <option value="s">S</option>
+                    <option value="m">M</option>
+                    <option value="l">L</option>
+                    <option value="xl">XL</option>
+                    <option value="xxl">XXL</option>
+                  </select>
+                </div>
                 <div className="rounded-3xl border border-border bg-muted/70 p-3 text-sm text-muted-foreground">
                   Total product stock is calculated from color quantities: <span className="font-semibold text-foreground">{totalStock}</span>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Saree Length (meters)</label>
@@ -898,6 +916,10 @@ const AdminProducts = () => {
                     <div>
                       <span className="text-muted-foreground">Fabric:</span>{' '}
                       <span className="font-medium">{detailsProduct.fabric || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Size:</span>{' '}
+                      <span className="font-medium">{detailsProduct.size || '—'}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Saree Length:</span>{' '}

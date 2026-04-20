@@ -90,6 +90,7 @@ export async function GET(
       shortDescription: product.shortDescription,
       description: product.description,
       fabricType: product.fabricType ?? product.fabric,
+      size: product.size,
       sareeLength: product.sareeLength,
       blouseIncluded: product.blouseIncluded ?? false,
       tags: product.tags || [],

@@ -8,7 +8,7 @@ export interface Product {
   fabric: string;
   images: string[];
   category: string;
-  colors: string[];
+  colors?: string[];
   sizes?: string[];
   stock: number;
   sku: string;
@@ -139,6 +139,27 @@ export const initialProducts: Product[] = [
     tags: ['office', 'summer', 'minimal'], featured: false, isNew: false, isSale: false, isPremium: false, isTrending: true, rating: 4.3, reviews: 178,
   },
   {
+    id: '8', name: 'Anarkali Suit', slug: 'anarkali-suit',
+    price: 3999, comparePrice: 5999, description: 'Elegant Anarkali suit with intricate embroidery and premium fabric.',
+    fabric: 'Premium Cotton Blend', images: [sareeImages[0], sareeImages[1]],
+    category: 'dresses', sizes: ['S', 'M', 'L', 'XL', 'XXL'], stock: 20, sku: 'ANK-001',
+    tags: ['party', 'festive', 'traditional'], featured: true, isNew: true, isSale: true, isPremium: true, isTrending: true, rating: 4.7, reviews: 89,
+  },
+  {
+    id: '9', name: 'Indo Western Dress', slug: 'indo-western-dress',
+    price: 2499, comparePrice: 3499, description: 'Stylish Indo-western fusion dress perfect for special occasions.',
+    fabric: 'Silk Blend', images: [sareeImages[2], sareeImages[3]],
+    category: 'dresses', sizes: ['S', 'M', 'L', 'XL'], stock: 15, sku: 'IND-001',
+    tags: ['modern', 'fusion', 'party'], featured: false, isNew: true, isSale: false, isPremium: false, isTrending: false, rating: 4.2, reviews: 45,
+  },
+  {
+    id: '10', name: 'A-Line Kurti', slug: 'a-line-kurti',
+    price: 1899, comparePrice: 2899, description: 'Comfortable A-line kurti with elegant design and perfect fit.',
+    fabric: 'Pure Cotton', images: [sareeImages[4], sareeImages[5]],
+    category: 'dresses', sizes: ['S', 'M', 'L', 'XL', 'XXL'], stock: 30, sku: 'KRT-001',
+    tags: ['casual', 'comfortable', 'everyday'], featured: true, isNew: false, isSale: true, isPremium: false, isTrending: true, rating: 4.4, reviews: 123,
+  },
+  {
     id: '8', name: 'Nauvari Saree', slug: 'nauvari-saree',
     price: 3999, comparePrice: 5999, description: 'Traditional Maharashtrian Nauvari saree, perfect for cultural events and traditional functions.',
     fabric: 'Pure Silk with Zari Border', images: [sareeImages[7], sareeImages[0]],
@@ -237,7 +258,7 @@ export const initialReviews: Review[] = [
 
 export const getInventoryItems = (products: Product[]): InventoryItem[] => {
   return products.flatMap(p =>
-    p.colors.map((color, i) => ({
+    (p.colors || []).map((color, i) => ({
       productId: p.id,
       productName: p.name,
       variant: color,

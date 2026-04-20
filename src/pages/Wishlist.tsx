@@ -150,7 +150,7 @@ const Wishlist = () => {
                           name: product.name,
                           image: product.images[0],
                           price: product.price,
-                          color: product.colors[0],
+                          color: product.colors?.[0] || '',
                           quantity: 1,
                         });
                         toast({ title: 'Added to cart' });

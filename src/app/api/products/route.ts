@@ -85,6 +85,7 @@ export async function GET(_request: NextRequest) {
         comparePrice,
         description: String(p.description || ''),
         fabric: String(p.fabricType ?? p.fabric ?? ''),
+        size: String(p.size || ''),
         images: images.length ? images : ['/placeholder.svg'],
         category: String(p.category || ''),
         colors: colorNames,

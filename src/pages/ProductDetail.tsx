@@ -261,6 +261,7 @@ interface ProductDetail {
   shortDescription?: string;
   description?: string;
   fabricType?: string;
+  size?: string;
   sareeLength?: string;
   blouseIncluded: boolean;
   tags: string[];
@@ -613,6 +614,9 @@ export default function ProductDetailPage() {
                 )}
                 {product.fabricType && (
                   <SpecRow icon={<Shirt className="h-3.5 w-3.5" />} label="Fabric" value={product.fabricType} />
+                )}
+                {product.size && (
+                  <SpecRow icon={<Package className="h-3.5 w-3.5" />} label="Size" value={product.size} />
                 )}
                 {product.sareeLength && (
                   <SpecRow icon={<Ruler className="h-3.5 w-3.5" />} label="Length" value={product.sareeLength} />

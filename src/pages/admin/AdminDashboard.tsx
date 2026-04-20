@@ -195,7 +195,7 @@ const AdminDashboard = () => {
                 <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
                     <p className="font-medium text-sm">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.colors[0]} · {p.sku}</p>
+                    <p className="text-xs text-muted-foreground">{p.colors?.[0] || 'N/A'} · {p.sku}</p>
                   </div>
                   <div className="text-right">
                     <p className={`font-bold text-sm ${p.stock <= 2 ? 'text-destructive' : 'text-gold'}`}>{p.stock} left</p>

@@ -61,7 +61,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       image: product.images[0],
       price: product.price,
       comparePrice: product.comparePrice,
-      color: product.colors[0],
+      color: product.colors?.[0] || '',
       quantity: 1,
     });
     toast({ title: 'Added to cart', description: product.name });

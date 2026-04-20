@@ -47,6 +47,11 @@ const AdminOrders = () => {
   const [productFilter, setProductFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  
+  // Multi-select states
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -92,6 +97,179 @@ const AdminOrders = () => {
     setDateFilter('');
     setStatusFilter('all');
     setCurrentPage(1);
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedOrders.size === filteredOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filteredOrders.map(order => order.id || order._id || '')));
+    }
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedOrders.size === 0) return;
+    
+    if (bulkAction === 'delete') {
+      if (!confirm(`Are you sure you want to delete ${selectedOrders.size} order(s)? This action cannot be undone.`)) {
+        return;
+      }
+      await handleBulkDelete();
+    } else if (bulkAction === 'print') {
+      handleBulkPrint();
+    } else {
+      await handleBulkStatusUpdate();
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    setBulkUpdating(true);
+    try {
+      const promises = Array.from(selectedOrders).map(orderId => 
+        fetch('/api/admin/orders', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: 'Bearer admin-token',
+          },
+          body: JSON.stringify({ id: orderId, orderStatus: bulkAction }),
+        })
+      );
+      
+      const results = await Promise.all(promises);
+      const allSuccessful = results.every(res => res.ok);
+      
+      if (allSuccessful) {
+        // Update local state
+        selectedOrders.forEach(orderId => {
+          updateOrderStatus(orderId, bulkAction as OrderStatus);
+        });
+        setTimeout(() => fetchOrders(), 500);
+        setSelectedOrders(new Set());
+        setBulkAction('');
+      } else {
+        console.error('Some bulk actions failed');
+      }
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkUpdating(true);
+    try {
+      const promises = Array.from(selectedOrders).map(orderId => 
+        fetch('/api/admin/orders', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: 'Bearer admin-token',
+          },
+          body: JSON.stringify({ id: orderId }),
+        })
+      );
+      
+      const results = await Promise.all(promises);
+      const allSuccessful = results.every(res => res.ok);
+      
+      if (allSuccessful) {
+        // Update local state - remove deleted orders
+        setOrders(prev => prev.filter(order => {
+          const orderId = order.id || order._id || '';
+          return !selectedOrders.has(orderId);
+        }));
+        setTimeout(() => fetchOrders(), 500);
+        setSelectedOrders(new Set());
+        setBulkAction('');
+      } else {
+        console.error('Some deletions failed');
+      }
+    } catch (error) {
+      console.error('Error performing bulk delete:', error);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkPrint = () => {
+    const selectedOrdersData = filteredOrders.filter(order => {
+      const orderId = order.id || order._id || '';
+      return selectedOrders.has(orderId);
+    });
+    
+    // Create print content for all selected orders
+    const printContent = selectedOrdersData.map(order => `
+      <div style="page-break-after: always; margin-bottom: 20px;">
+        <h2>Order: ${order.orderNumber}</h2>
+        <p><strong>Customer:</strong> ${order.customerName}</p>
+        <p><strong>Date:</strong> ${order.date}</p>
+        <p><strong>Status:</strong> ${order.orderStatus}</p>
+        <p><strong>Payment:</strong> ${order.paymentStatus}</p>
+        <p><strong>Total:</strong> ₹${order.total.toLocaleString()}</p>
+        <h3>Items:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th style="border: 1px solid #ddd; padding: 8px;">Product</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Color</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Size</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Qty</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items?.map(item => `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.color}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.size || 'N/A'}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">₹${item.price.toLocaleString()}</td>
+              </tr>
+            `).join('') || ''}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Orders - Morpankh Saree</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            ${printContent}
+            <script>
+              window.onload = function() {
+                window.print();
+                window.close();
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
   };
 
   const applyFilters = (ordersList: Order[]) => {
@@ -223,6 +401,53 @@ const AdminOrders = () => {
         </button>
       </div>
       
+      {/* Bulk Actions Section */}
+      {selectedOrders.size > 0 && (
+        <div className="bg-card rounded-xl border border-border p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">
+                {selectedOrders.size} order{selectedOrders.size > 1 ? 's' : ''} selected
+              </span>
+              <select
+                value={bulkAction}
+                onChange={(e) => setBulkAction(e.target.value)}
+                className="px-3 py-1 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Bulk Actions</option>
+                <option value="pending">Mark as Pending</option>
+                <option value="confirmed">Mark as Confirmed</option>
+                <option value="shipped">Mark as Shipped</option>
+                <option value="delivered">Mark as Delivered</option>
+                <option value="cancelled">Cancel Orders</option>
+                <option value="print">🖨️ Print Selected Bills</option>
+                <option value="delete">🗑️ Delete Selected</option>
+              </select>
+              <button
+                onClick={handleBulkAction}
+                disabled={!bulkAction || bulkUpdating}
+                className="px-4 py-1 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {bulkUpdating ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Applying...
+                  </span>
+                ) : (
+                  'Apply'
+                )}
+              </button>
+            </div>
+            <button
+              onClick={() => setSelectedOrders(new Set())}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Filters Section */}
       <div className="bg-card rounded-xl border border-border p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -325,6 +550,14 @@ const AdminOrders = () => {
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/50">
             <tr>
+              <th className="text-left p-4 w-12">
+                <input
+                  type="checkbox"
+                  checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
+                  onChange={handleSelectAll}
+                  className="rounded border-border text-primary focus:ring-primary/20"
+                />
+              </th>
               <th className="text-left p-4">Image</th>
               <th className="text-left p-4">Order</th>
               <th className="text-left p-4">Customer</th>
@@ -339,8 +572,19 @@ const AdminOrders = () => {
             {filteredOrders.map((order) => {
               const firstItem = order.items?.[0];
               const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+              const orderId = order.id || order._id || '';
+              const isSelected = selectedOrders.has(orderId);
+              
               return (
-                <tr key={order.id || order._id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={orderId} className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${isSelected ? 'bg-muted/20' : ''}`}>
+                  <td className="p-4">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleSelectOrder(orderId)}
+                      className="rounded border-border text-primary focus:ring-primary/20"
+                    />
+                  </td>
                   <td className="p-4">
                     <div className="w-16 h-16 rounded-xl overflow-hidden border border-border/60">
                       <img src={getOrderImage(order)} alt={firstItem?.name || order.orderNumber} className="w-full h-full object-cover" />
