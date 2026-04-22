@@ -19,12 +19,14 @@ type Order = {
   city?: string;
   state?: string;
   pincode?: string;
-  items?: Array<{ productId: string; name: string; color: string; size?: string; quantity: number; price: number; image?: string }>;
+  items?: Array<{ productId: string; name: string; color: string; size?: string; quantity: number; price: number; image?: string; isPrebooking?: boolean; prebookingDeliveryDays?: number }>;
   subtotal?: number;
   total: number;
   paymentStatus: string;
   orderStatus: string;
   date: string;
+  isPrebookingOrder?: boolean;
+  expectedDeliveryDate?: string;
 };
 
 const AdminOrders = () => {
@@ -78,10 +80,135 @@ const AdminOrders = () => {
     setSelectedOrder(null);
   };
 
-  const handlePrintOrder = (orderNumber: string) => {
+  const handlePrintOrder = (order: Order) => {
     if (typeof window !== 'undefined') {
-      console.log(`Print order ${orderNumber}`);
-      window.print();
+      console.log(`Print order ${order.orderNumber}`);
+      
+      // Find the full order data
+      const orderData = orders.find(o => (o.id || o._id) === (order.id || order._id)) || order;
+      
+      // Create print content for the specific order
+      const printContent = `
+        <div style="font-family: Arial, sans-serif; margin: 20px;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #dbeafe; padding-bottom: 20px;">
+            <h1 style="margin: 0; color: #1f2937; font-size: 28px;">Morpankh Saree</h1>
+            <p style="margin: 5px 0 0; color: #6b7280; font-size: 14px;">Celebrating Indian Tradition</p>
+          </div>
+          
+          <div style="margin-bottom: 25px;">
+            <h2 style="margin: 0 0 15px; color: #1f2937; font-size: 18px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Order Information</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold; width: 50%;">Order Number:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-weight: bold;">${orderData.orderNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Order Date:</td>
+                <td style="padding: 8px 0; color: #1f2937;">${orderData.date}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Status:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-weight: bold; text-transform: capitalize;">${orderData.orderStatus}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Payment Status:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-weight: bold; text-transform: capitalize;">${orderData.paymentStatus}</td>
+              </tr>
+              ${orderData.isPrebookingOrder ? `
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Order Type:</td>
+                <td style="padding: 8px 0; color: #1f2937; font-weight: bold; color: #7c3aed;">Prebooking Order</td>
+              </tr>` : ''}
+              ${orderData.expectedDeliveryDate ? `
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Expected Delivery:</td>
+                <td style="padding: 8px 0; color: #1f2937;">${orderData.expectedDeliveryDate}</td>
+              </tr>` : ''}
+              ${orderData.razorpayOrderId ? `
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Razorpay Order ID:</td>
+                <td style="padding: 8px 0; color: #1f2937;">${orderData.razorpayOrderId}</td>
+              </tr>` : ''}
+              ${orderData.razorpayPaymentId ? `
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Razorpay Payment ID:</td>
+                <td style="padding: 8px 0; color: #1f2937;">${orderData.razorpayPaymentId}</td>
+              </tr>` : ''}
+            </table>
+          </div>
+
+          <div style="margin-bottom: 25px;">
+            <h3 style="margin: 0 0 15px; color: #1f2937; font-size: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Customer Details</h3>
+            <p style="margin: 0; color: #1f2937; font-weight: bold;">${orderData.customerName}</p>
+            ${orderData.customerEmail ? `<p style="margin: 5px 0; color: #4b5563;">Email: ${orderData.customerEmail}</p>` : ''}
+            ${orderData.customerPhone ? `<p style="margin: 5px 0; color: #4b5563;">Phone: ${orderData.customerPhone}</p>` : ''}
+            ${orderData.address ? `<p style="margin: 5px 0; color: #4b5563;">${orderData.address}</p><p style="margin: 5px 0; color: #4b5563;">${orderData.city || ''}${orderData.city && orderData.state ? ', ' : ''}${orderData.state || ''} ${orderData.pincode || ''}</p>` : ''}
+          </div>
+
+          <div style="margin-bottom: 25px;">
+            <h3 style="margin: 0 0 15px; color: #1f2937; font-size: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Order Items</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background-color: #f3f4f6;">
+                  <th style="padding: 12px; text-align: left; font-weight: bold; color: #374151;">Product</th>
+                  <th style="padding: 12px; text-align: center; font-weight: bold; color: #374151;">Color</th>
+                  <th style="padding: 12px; text-align: center; font-weight: bold; color: #374151;">Size</th>
+                  <th style="padding: 12px; text-align: center; font-weight: bold; color: #374151;">Qty</th>
+                  <th style="padding: 12px; text-align: right; font-weight: bold; color: #374151;">Price</th>
+                  <th style="padding: 12px; text-align: right; font-weight: bold; color: #374151;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${orderData.items?.map(item => `<tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.name}${item.isPrebooking ? '<div style="font-size: 11px; color: #7c3aed; margin-top: 2px;">Prebook (' + (item.prebookingDeliveryDays || 10) + '-' + ((item.prebookingDeliveryDays || 10) + 5) + ' days)</div>' : ''}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.color}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.size || '-'}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">Rs${item.price.toLocaleString()}</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">Rs${(item.price * item.quantity).toLocaleString()}</td></tr>`).join('')} || '<tr><td colspan="6" style="padding: 12px; text-align: center;">No items found</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 4px; margin-bottom: 25px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; color: #1f2937; font-weight: bold; font-size: 18px; text-align: right;">Total Amount:</td>
+                <td style="padding: 10px 15px; background-color: #dbeafe; color: #1e40af; font-weight: bold; font-size: 18px; text-align: right; border-radius: 4px;">₹${orderData.total.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px;">Thank you for shopping with Morpankh Saree!</p>
+            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+              This is a computer-generated invoice. For any queries, contact us at support@morpankh.com
+            </p>
+          </div>
+        </div>
+      `;
+      
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Order Invoice - ${orderData.orderNumber} | Morpankh Saree</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                @media print { body { margin: 0; } }
+                @page { margin: 20mm; }
+              </style>
+            </head>
+            <body>
+              ${printContent}
+              <script>
+                window.onload = function() {
+                  setTimeout(() => {
+                    window.print();
+                    window.close();
+                  }, 500);
+                }
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     }
   };
 
@@ -658,7 +785,7 @@ const AdminOrders = () => {
                       <button type="button" title="View order" aria-label="View order" onClick={() => openOrderModal(order)} className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button type="button" title="Print order" aria-label="Print order" onClick={() => handlePrintOrder(order.orderNumber)} className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
+                      <button type="button" title="Print order" aria-label="Print order" onClick={() => handlePrintOrder(order)} className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
                         <Printer className="h-4 w-4" />
                       </button>
                       <button type="button" title="Delete order" aria-label="Delete order" onClick={() => handleDeleteOrder(order.id || order._id)} className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-border text-destructive hover:bg-destructive/10 transition-colors">
@@ -720,6 +847,12 @@ const AdminOrders = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-muted-foreground"><span>Order Number</span><span>{selectedOrder.orderNumber}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>Date</span><span>{selectedOrder.date}</span></div>
+                    {selectedOrder.isPrebookingOrder && (
+                      <div className="flex justify-between text-muted-foreground"><span>Type</span><span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800">Prebooking</span></div>
+                    )}
+                    {selectedOrder.expectedDeliveryDate && (
+                      <div className="flex justify-between text-muted-foreground"><span>Expected Delivery</span><span>{selectedOrder.expectedDeliveryDate}</span></div>
+                    )}
                     <div className="flex justify-between text-muted-foreground"><span>Status</span><span className={`text-xs px-2 py-1 rounded-full ${statusColor(selectedOrder.orderStatus)}`}>{selectedOrder.orderStatus}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>Payment</span><span className={`text-xs px-2 py-1 rounded-full ${statusColor(selectedOrder.paymentStatus)}`}>{selectedOrder.paymentStatus}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>Razorpay Order ID</span><span className="max-w-[180px] truncate" title={selectedOrder.razorpayOrderId || ''}>{selectedOrder.razorpayOrderId || '—'}</span></div>
@@ -750,6 +883,11 @@ const AdminOrders = () => {
                         <p className="font-semibold">{item.name}</p>
                         <p className="text-sm text-muted-foreground">Color: {item.color}{item.size ? ` · Size: ${item.size}` : ''}</p>
                         <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                        {item.isPrebooking && (
+                          <p className="text-xs text-purple-600 font-medium">
+                            Prebook ({item.prebookingDeliveryDays || 10}-{(item.prebookingDeliveryDays || 10) + 5} days)
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">₹{(item.price * item.quantity).toLocaleString()}</p>

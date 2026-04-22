@@ -281,7 +281,7 @@ const Contact = () => {
                     <div>
                       <div className="flex items-center gap-1 mb-1">
                         {[1, 2, 3, 4, 5].map((i) => (
-                          <Star key={i} className="h-3.5 w-3.5 fill-current text-primary" />
+                          <Star key={`contact-star-${i}`} className="h-3.5 w-3.5 fill-current text-primary" />
                         ))}
                       </div>
                       <p className="font-semibold text-sm">4.9 / 5 — Highly Rated</p>

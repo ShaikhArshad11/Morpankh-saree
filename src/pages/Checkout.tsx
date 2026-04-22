@@ -4,6 +4,7 @@ import PublicLayout from '@/components/PublicLayout';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar, Package } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -46,6 +47,14 @@ const loadRazorpayScript = (): Promise<boolean> =>
 const Checkout = () => {
   const router = useRouter();
   const { cart, clearCart, user, token } = useStore();
+  
+  // Check if cart contains prebooking items
+  const hasPrebookingItems = cart.some(item => item.isPrebooking);
+  const prebookingItems = cart.filter(item => item.isPrebooking);
+  const maxDeliveryDays = Math.max(...prebookingItems.map(item => item.prebookingDeliveryDays || 10), 0);
+  const expectedDeliveryDate = maxDeliveryDays > 0 ? 
+    new Date(Date.now() + maxDeliveryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+    undefined;
   const [form, setForm] = useState({
     name: user?.name || '',
     phone: user?.mobile || '',
@@ -87,12 +96,16 @@ const Checkout = () => {
             size: c.size,
             quantity: c.quantity,
             price: c.price,
+            isPrebooking: c.isPrebooking,
+            prebookingDeliveryDays: c.prebookingDeliveryDays,
           })),
           subtotal,
           total: subtotal,
           paymentStatus: 'pending' as const,
           orderStatus: 'pending' as const,
           date: new Date().toISOString().split('T')[0],
+          isPrebookingOrder: hasPrebookingItems,
+          expectedDeliveryDate,
         };
 
         console.log('Checkout - token from store:', token);
@@ -135,7 +148,7 @@ const Checkout = () => {
           amount,
           currency,
           name: 'Morpankh Saree',
-          description: `Order ${orderPayload.orderNumber}`,
+          description: `${hasPrebookingItems ? 'Prebooking Order' : 'Order'} ${orderPayload.orderNumber}${expectedDeliveryDate ? ` - Delivery by ${expectedDeliveryDate}` : ''}`,
           order_id: orderId,
           prefill: {
             name: customerName,
@@ -267,21 +280,46 @@ const Checkout = () => {
             </div>
           </div>
           <div className="h-fit lg:sticky lg:top-24">
-            <Alert variant="destructive" className="mb-4 bg-yellow-50 border-yellow-200 text-yellow-800">
-              <AlertDescription className="font-semibold">
-                ⚠️ 50 Rupees Charge if not filled correct Details during Checkout
+            {/* Prebooking Alert */}
+            {hasPrebookingItems && (
+              <Alert className="mb-6 bg-purple-50 border-2 border-purple-200 text-purple-800">
+                <Package className="h-4 w-4" />
+                <AlertDescription className="font-bold">
+                  Prebooking Order
+                </AlertDescription>
+                <AlertDescription className="text-sm mt-1">
+                  This order contains prebooking items. Expected delivery: {maxDeliveryDays}-{maxDeliveryDays + 5} days
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <Alert variant="destructive" className="mb-6 bg-red-50 border-2 border-red-200 text-red-800 animate-pulse">
+              <AlertDescription className="font-bold text-lg">
+                &#x26a0; IMPORTANT: 90 Rupees Additional Charge
+              </AlertDescription>
+              <AlertDescription className="text-sm mt-2">
+                Please ensure all details are filled correctly. Incorrect information will result in a &#x20b9;90 charge.
               </AlertDescription>
             </Alert>
+            
             <div className="bg-card rounded-xl p-6 border border-border">
               <h3 className="font-display text-lg font-semibold mb-4">Order Summary</h3>
               {cart.map((item) => (
                 <div key={`${item.productId}-${item.color}`} className="flex justify-between text-sm py-2 border-b border-border last:border-0">
-                  <span>{item.name} × {item.quantity}</span>
-                  <span>₹{(item.price * item.quantity).toLocaleString()}</span>
+                  <div className="flex-1">
+                    <div className="font-medium">{item.name} &times; {item.quantity}</div>
+                    {item.isPrebooking && (
+                      <div className="flex items-center gap-1 text-xs text-purple-600 mt-1">
+                        <Calendar className="h-3 w-3" />
+                        Prebook ({item.prebookingDeliveryDays || 10}-{(item.prebookingDeliveryDays || 10) + 5} days)
+                      </div>
+                    )}
+                  </div>
+                  <span>&#x20b9;{(item.price * item.quantity).toLocaleString()}</span>
                 </div>
               ))}
               <div className="border-t border-border mt-4 pt-4 flex justify-between font-bold text-lg">
-                <span>Total</span><span className="text-primary">₹{subtotal.toLocaleString()}</span>
+                <span>Total</span><span className="text-primary">&#x20b9;{subtotal.toLocaleString()}</span>
               </div>
               <button type="submit" disabled={processing} className="btn-primary w-full mt-6 disabled:opacity-50">
                 {processing ? '⏳ Processing Payment...' : '💳 Place Order (Razorpay)'}

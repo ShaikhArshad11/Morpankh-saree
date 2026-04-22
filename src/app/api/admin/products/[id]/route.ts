@@ -121,11 +121,25 @@ export async function PUT(
 
     if (body?.shortDescription !== undefined) update.shortDescription = body.shortDescription;
 
+    if (body?.size !== undefined) update.size = body.size || '';
+    if (body?.hasSizes !== undefined) update.hasSizes = Boolean(body.hasSizes || false);
+    if (body?.sizes !== undefined) update.sizes = body.hasSizes ? (Array.isArray(body.sizes) ? body.sizes : []) : [];
+
     if (body?.hidden !== undefined) update.hidden = Boolean(body.hidden);
     if (body?.featured !== undefined) update.featured = Boolean(body.featured);
     if (body?.isNew !== undefined) update.isNew = Boolean(body.isNew);
     if (body?.isPremium !== undefined) update.isPremium = Boolean(body.isPremium);
     if (body?.isTrending !== undefined) update.isTrending = Boolean(body.isTrending);
+    if (body?.isLimitedOffer !== undefined) update.isLimitedOffer = Boolean(body.isLimitedOffer);
+    if (body?.limitedStock !== undefined) update.limitedStock = body.isLimitedOffer ? Number(body.limitedStock) || undefined : undefined;
+    if (body?.limitedOfferMessage !== undefined) update.limitedOfferMessage = body.isLimitedOffer ? String(body.limitedOfferMessage || '') : undefined;
+    if (body?.cardOfferText !== undefined) update.cardOfferText = typeof body.cardOfferText === 'string' ? body.cardOfferText.trim() : '';
+
+    // Prebooking fields
+    if (body?.isPrebooking !== undefined) update.isPrebooking = Boolean(body.isPrebooking);
+    if (body?.prebookingPrice !== undefined) update.prebookingPrice = body.isPrebooking ? Number(body.prebookingPrice) || undefined : undefined;
+    if (body?.prebookingDeliveryDays !== undefined) update.prebookingDeliveryDays = body.isPrebooking ? Number(body.prebookingDeliveryDays) || undefined : undefined;
+    if (body?.prebookingMessage !== undefined) update.prebookingMessage = body.isPrebooking ? String(body.prebookingMessage || '') : undefined;
 
     if (body?.rating !== undefined) update.rating = Number(body.rating) || 0;
     if (body?.reviews !== undefined) update.reviews = Number(body.reviews) || 0;

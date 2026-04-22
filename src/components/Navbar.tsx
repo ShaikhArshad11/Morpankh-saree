@@ -52,6 +52,17 @@ const Navbar = () => {
     };
   }, []);
 
+  // Handle Escape key to close sidebar
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileOpen) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileOpen]);
+
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === '/') return pathname === '/';
@@ -189,32 +200,84 @@ const Navbar = () => {
           </div>
 
           <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-foreground/70">
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Menu className="h-5 w-5" />
           </button>
         </div>
       </div>
 
-        {/* Mobile menu */}
+        {/* Mobile sidebar overlay */}
         {mobileOpen && (
-          <div className="md:hidden bg-card border-t border-border animate-slide-in-right">
-            <div className="flex flex-col p-4 gap-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  href={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={
-                    isActive(link.to)
-                      ? 'py-2 px-4 rounded-lg transition-colors bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
-                      : 'py-2 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors'
-                  }
-                >
-                  {link.label}
-                </Link>
-              ))}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        {/* Mobile sidebar */}
+        <div className={`fixed top-0 left-0 h-full w-72 bg-card border-r border-border shadow-xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+              <Image src={logo} alt="Morpankh Saree" height={80} width={80} />
+            </Link>
+            <button 
+              onClick={() => setMobileOpen(false)} 
+              className="p-2 text-foreground/70 hover:text-primary transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          
+          <div className="flex flex-col p-4 gap-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                href={link.to}
+                onClick={() => setMobileOpen(false)}
+                className={
+                  isActive(link.to)
+                    ? 'py-3 px-4 rounded-lg transition-colors bg-primary/10 text-primary font-semibold ring-1 ring-primary/20 flex items-center gap-3'
+                    : 'py-3 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors flex items-center gap-3'
+                }
+              >
+                {link.label}
+              </Link>
+            ))}
+            
+            {/* Mobile user menu items */}
+            <div className="border-t border-border pt-2 mt-2">
+              {isLoggedIn ? (
+                <>
+                  <div className="px-4 py-2 border-b border-border">
+                    <p className="text-sm font-medium">{userName}</p>
+                    <p className="text-xs text-muted-foreground">{isAdmin ? 'Admin' : 'Customer'}</p>
+                  </div>
+                  <Link href="/profile" onClick={() => setMobileOpen(false)} className="py-3 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors flex items-center gap-3">My Profile</Link>
+                  <Link href="/orders" onClick={() => setMobileOpen(false)} className="py-3 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors flex items-center gap-3">My Orders</Link>
+                  {isAdmin && (
+                    <Link href="/admin" onClick={() => setMobileOpen(false)} className="py-3 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors flex items-center gap-3">Admin Panel</Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      logout();
+                      toast({ title: 'Logged out successfully' });
+                      setMobileOpen(false);
+                    }}
+                    className="w-full text-left py-3 px-4 text-destructive hover:bg-muted rounded-lg transition-colors flex items-center gap-3"
+                  >
+                    <LogOut className="h-4 w-4" /> Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="py-3 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors flex items-center gap-3">Customer Login</Link>
+                  <Link href="/register" onClick={() => setMobileOpen(false)} className="py-3 px-4 text-foreground/80 hover:text-primary hover:bg-muted rounded-lg transition-colors flex items-center gap-3">Register</Link>
+                </>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </nav>
     </div>
   );

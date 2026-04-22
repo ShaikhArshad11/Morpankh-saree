@@ -101,6 +101,7 @@ const Index = () => {
 
   // ─── Derived data (single source of truth: debouncedQuery) ───────────────
   const visibleProducts = products.filter((p) => !p.hidden);
+  const limitedOfferProducts = visibleProducts.filter((p) => p.isLimitedOffer);
   const bestSellers = visibleProducts.filter((p) => p.featured);
   const newArrivals = visibleProducts.filter((p) => p.isNew);
   const saleProducts = visibleProducts.filter((p) => p.isSale);
@@ -223,7 +224,7 @@ const Index = () => {
           <div className="h-[400px] skeleton-loading mb-12 rounded-2xl" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="space-y-3">
+              <div key={`skeleton-${i}`} className="space-y-3">
                 <div className="aspect-[3/4] skeleton-loading rounded-xl" />
                 <div className="h-4 skeleton-loading w-3/4" />
                 <div className="h-4 skeleton-loading w-1/2" />
@@ -436,6 +437,13 @@ const Index = () => {
 
           {/* Product Sections */}
           <ProductSection
+            title="Limited Offer"
+            subtitle="Hurry up! Limited stock available"
+            items={limitedOfferProducts}
+            filterParam="limited"
+            bg="bg-orange-50/40"
+          />
+          <ProductSection
             title="Best Sellers"
             subtitle="Our most loved sarees"
             items={bestSellers}
@@ -516,7 +524,7 @@ const Index = () => {
                         <div className="flex gap-0.5">
                           {[...Array(5)].map((_, i) => (
                             <Star
-                              key={i}
+                              key={`star-${i}`}
                               className={`h-3 w-3 ${
                                 i < review.rating ? 'text-gold fill-gold' : 'text-muted-foreground'
                               }`}

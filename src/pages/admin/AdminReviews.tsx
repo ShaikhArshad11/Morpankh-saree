@@ -140,7 +140,7 @@ const AdminReviews = () => {
                     <p className="font-medium text-sm">{r.name}</p>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`h-3 w-3 ${i < r.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
+                        <Star key={`star-${i}-${r._id}`} className={`h-3 w-3 ${i < r.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
                       ))}
                     </div>
                     <span className="text-xs text-muted-foreground">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
@@ -190,7 +190,7 @@ const AdminReviews = () => {
                 <p className="font-medium text-sm">{r.name}</p>
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-3 w-3 ${i < r.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
+                    <Star key={`star-${i}-${r._id}`} className={`h-3 w-3 ${i < r.rating ? 'text-gold fill-gold' : 'text-muted-foreground'}`} />
                   ))}
                 </div>
               </div>

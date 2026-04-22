@@ -238,6 +238,7 @@ import { Product } from '@/data/mockData';
 
 import ProductGallery from '@/components/ProductGallery';
 import ColorSwatches from '@/components/ColorSwatches';
+import SizeSelector from '@/components/SizeSelector';
 
 // ──────────────────────────────────────────
 // Types (matching API response)
@@ -258,17 +259,29 @@ interface ProductDetail {
   category: string;
   basePrice: number;
   compareAtPrice?: number;
+  discountPercent?: number;
   shortDescription?: string;
-  description?: string;
-  fabricType?: string;
+  description: string;
+  fabricType: string;
   size?: string;
+  hasSizes?: boolean;
+  sizes?: string[];
   sareeLength?: string;
-  blouseIncluded: boolean;
+  blouseIncluded?: boolean;
   tags: string[];
-  colors: ProductColor[];
+  colors: Array<{
+    colorName: string;
+    stock: number;
+    images: string[];
+    isOutOfStock: boolean;
+  }>;
   isSale: boolean;
-  rating?: number;
-  reviewCount?: number;
+  isFeatured: boolean;
+  rating: number;
+  reviewCount: number;
+  isLimitedOffer?: boolean;
+  limitedStock?: number;
+  limitedOfferMessage?: string;
 }
 
 // ──────────────────────────────────────────
@@ -291,6 +304,7 @@ export default function ProductDetailPage() {
 
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);   // ← core state
   const [isChangingColor, setIsChangingColor] = useState(false);  // animation flag
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
   const isWished = product ? wishlist.includes(product._id) : false;
@@ -374,6 +388,17 @@ export default function ProductDetailPage() {
   // ── Cart handler ─────────────────────────────────────
   const handleAddToCart = () => {
     if (!product || !selectedColor || isOutOfStock) return;
+    
+    // Validate size selection if product has sizes
+    if (product.hasSizes && product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast({
+        title: 'Please select a size',
+        description: 'Size selection is required for this product',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     addToCart({
       productId: product._id,
       name: product.name,
@@ -381,11 +406,17 @@ export default function ProductDetailPage() {
       price: product.basePrice,
       comparePrice: product.compareAtPrice,
       color: selectedColor.colorName,
+      size: selectedSize || undefined,
       quantity,
     });
+    
+    const description = selectedSize 
+      ? `${product.name} (${selectedColor.colorName}, ${selectedSize}) × ${quantity}`
+      : `${product.name} (${selectedColor.colorName}) × ${quantity}`;
+    
     toast({
       title: 'Added to cart!',
-      description: `${product.name} (${selectedColor.colorName}) × ${quantity}`,
+      description,
     });
   };
 
@@ -407,7 +438,7 @@ export default function ProductDetailPage() {
               <div className="h-10 bg-muted rounded w-1/2" />
               <div className="flex gap-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-11 h-11 bg-muted rounded-full" />
+                  <div key={`skeleton-circle-${i}`} className="w-11 h-11 bg-muted rounded-full" />
                 ))}
               </div>
               <div className="h-12 bg-muted rounded" />
@@ -501,6 +532,34 @@ export default function ProductDetailPage() {
               )}
             </div>
 
+            {/* Limited Offer Urgency */}
+            {product.isLimitedOffer && (
+              <div className="rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-red-50 p-4 animate-pulse">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                  <h3 className="font-bold text-orange-800 text-sm">LIMITED TIME OFFER</h3>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-orange-700 font-medium text-sm">
+                    {product.limitedOfferMessage || 'Hurry! Limited stock available!'}
+                  </p>
+                  {product.limitedStock && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-orange-800 font-bold text-lg">
+                        Only {product.limitedStock} left!
+                      </span>
+                      <div className="flex-1 bg-orange-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min((product.limitedStock / 10) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <hr className="border-border" />
 
             {/* ── COLOR SWITCHER ─────────────────────── */}
@@ -511,6 +570,16 @@ export default function ProductDetailPage() {
               onSelect={handleColorChange}      // ← triggers gallery update
               variantFirstImages={product.colors.map((c) => c.images?.[0])}
             />
+
+            {/* Size Selector - Only show if product has sizes */}
+            {product.hasSizes && product.sizes && product.sizes.length > 0 && (
+              <SizeSelector
+                sizes={product.sizes}
+                selectedSize={selectedSize}
+                onSizeSelect={setSelectedSize}
+                disabled={isOutOfStock}
+              />
+            )}
 
             {/* Quantity */}
             <div>
@@ -615,8 +684,11 @@ export default function ProductDetailPage() {
                 {product.fabricType && (
                   <SpecRow icon={<Shirt className="h-3.5 w-3.5" />} label="Fabric" value={product.fabricType} />
                 )}
-                {product.size && (
+                {product.size && !product.hasSizes && (
                   <SpecRow icon={<Package className="h-3.5 w-3.5" />} label="Size" value={product.size} />
+                )}
+                {product.hasSizes && product.sizes && product.sizes.length > 0 && (
+                  <SpecRow icon={<Package className="h-3.5 w-3.5" />} label="Available Sizes" value={product.sizes.join(', ')} />
                 )}
                 {product.sareeLength && (
                   <SpecRow icon={<Ruler className="h-3.5 w-3.5" />} label="Length" value={product.sareeLength} />

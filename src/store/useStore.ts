@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Product, Category, Order, Customer, Review, initialCategories, initialOrders, initialCustomers, initialReviews } from '@/data/mockData';
+import { Product, Category, Order, Customer, Review, initialCategories, initialOrders, initialCustomers, initialReviews, initialProducts } from '@/data/mockData';
 
 export interface CartItem {
   productId: string;
@@ -11,6 +11,10 @@ export interface CartItem {
   color: string;
   size?: string;
   quantity: number;
+  // Prebooking fields
+  isPrebooking?: boolean;
+  prebookingPrice?: number;
+  prebookingDeliveryDays?: number;
 }
 
 interface StoreState {
@@ -81,7 +85,7 @@ interface StoreState {
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      products: [],
+      products: initialProducts,
       categories: initialCategories,
       orders: initialOrders,
       customers: initialCustomers,
@@ -100,9 +104,13 @@ export const useStore = create<StoreState>()(
           const data = await res.json();
           if (res.ok && data?.success && Array.isArray(data.data)) {
             set({ products: data.data });
+          } else {
+            // Fallback to mock data if API fails
+            set({ products: initialProducts });
           }
         } catch {
-          // ignore
+          // Fallback to mock data on error
+          set({ products: initialProducts });
         }
       },
 

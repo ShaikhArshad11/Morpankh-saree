@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Minus, Plus, Trash2, ShoppingCart, Package } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart, Package, Calendar } from 'lucide-react';
 import PublicLayout from '@/components/PublicLayout';
 import { useStore } from '@/store/useStore';
+import PrebookingBadge from '@/components/PrebookingBadge';
 
 const Cart = () => {
   const { cart, updateCartQuantity, removeFromCart } = useStore();
@@ -278,11 +279,28 @@ const Cart = () => {
                       className="w-24 h-28 object-cover rounded-xl border border-border/50" 
                     />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-lg">{item.name}</h3>
+                        {item.isPrebooking && (
+                          <PrebookingBadge deliveryDays={item.prebookingDeliveryDays || 12} />
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground mb-2">
                         Color: {item.color}{item.size ? ` | Size: ${item.size}` : ''}
                       </p>
-                      <p className="font-bold text-xl mb-4" style={{ color: 'hsl(var(--primary))' }}>₹{item.price.toLocaleString()}</p>
+                      <div className="mb-4">
+                        <p className="font-bold text-xl" style={{ color: 'hsl(var(--primary))' }}>
+                          Rs{item.price.toLocaleString()}
+                        </p>
+                        {item.isPrebooking && (
+                          <div className="mt-1 space-y-1">
+                            <div className="flex items-center gap-1 text-xs font-medium text-purple-600">
+                              <Calendar className="h-3 w-3" />
+                              Expected delivery: {item.prebookingDeliveryDays || 10}-{(item.prebookingDeliveryDays || 10) + 5} days
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <button 

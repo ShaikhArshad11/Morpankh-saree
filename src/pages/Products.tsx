@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 
 const highlightFilters = [
   { label: 'Best Seller', key: 'featured' },
+  { label: 'Limited Offer', key: 'limited' },
   { label: 'Sale', key: 'sale' },
   { label: 'New Arrival', key: 'new' },
   { label: 'Trending', key: 'trending' },
@@ -38,6 +39,7 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
     }
     if (selectedCategory) result = result.filter((p) => p.category === selectedCategory);
     if (selectedHighlight === 'featured') result = result.filter((p) => p.featured);
+    if (selectedHighlight === 'limited') result = result.filter((p) => p.isLimitedOffer);
     if (selectedHighlight === 'sale') result = result.filter((p) => p.isSale);
     if (selectedHighlight === 'new') result = result.filter((p) => p.isNew);
     if (selectedHighlight === 'trending') result = result.filter((p) => p.isTrending);
@@ -395,7 +397,7 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
                         {getPageItems().map((it, idx) => {
                           if (it === 'ellipsis') {
                             return (
-                              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+                              <span key={`ellipsis-${idx === 1 ? 'start' : 'end'}`} className="px-2 text-muted-foreground">
                                 ...
                               </span>
                             );
@@ -404,7 +406,7 @@ const Products = ({ initialCategory = '', initialHighlight = '' }: { initialCate
                           const isActive = it === page;
                           return (
                             <button
-                              key={`page-${it}-${idx}`}
+                              key={`page-${it}`}
                               type="button"
                               onClick={() => handleSetPage(it)}
                               className={`h-10 min-w-10 px-3 rounded-lg border text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:bg-muted/50'}`}

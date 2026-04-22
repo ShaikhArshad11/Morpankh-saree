@@ -9,6 +9,7 @@ export interface Product {
   images: string[];
   category: string;
   colors?: string[];
+  hasSizes?: boolean;
   sizes?: string[];
   stock: number;
   sku: string;
@@ -22,6 +23,15 @@ export interface Product {
   reviews: number;
   hidden?: boolean;
   salePercent?: number;
+  isLimitedOffer?: boolean;
+  limitedStock?: number;
+  limitedOfferMessage?: string;
+  cardOfferText?: string;
+  // Prebooking fields
+  isPrebooking?: boolean;
+  prebookingPrice?: number;
+  prebookingDeliveryDays?: number;
+  prebookingMessage?: string;
 }
 
 export interface Category {
@@ -42,12 +52,25 @@ export interface Order {
   city: string;
   state: string;
   pincode: string;
-  items: { productId: string; name: string; image?: string; color: string; size?: string; quantity: number; price: number }[];
+  items: { 
+    productId: string; 
+    name: string; 
+    image?: string; 
+    color: string; 
+    size?: string; 
+    quantity: number; 
+    price: number;
+    isPrebooking?: boolean;
+    prebookingDeliveryDays?: number;
+  }[];
   subtotal: number;
   total: number;
   paymentStatus: 'pending' | 'paid' | 'failed';
   orderStatus: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   date: string;
+  // Prebooking order fields
+  isPrebookingOrder?: boolean;
+  expectedDeliveryDate?: string;
 }
 
 export interface Customer {
@@ -142,21 +165,21 @@ export const initialProducts: Product[] = [
     id: '8', name: 'Anarkali Suit', slug: 'anarkali-suit',
     price: 3999, comparePrice: 5999, description: 'Elegant Anarkali suit with intricate embroidery and premium fabric.',
     fabric: 'Premium Cotton Blend', images: [sareeImages[0], sareeImages[1]],
-    category: 'dresses', sizes: ['S', 'M', 'L', 'XL', 'XXL'], stock: 20, sku: 'ANK-001',
+    category: 'dresses', hasSizes: true, sizes: ['S', 'M', 'L', 'XL', 'XXL'], stock: 20, sku: 'ANK-001',
     tags: ['party', 'festive', 'traditional'], featured: true, isNew: true, isSale: true, isPremium: true, isTrending: true, rating: 4.7, reviews: 89,
   },
   {
     id: '9', name: 'Indo Western Dress', slug: 'indo-western-dress',
     price: 2499, comparePrice: 3499, description: 'Stylish Indo-western fusion dress perfect for special occasions.',
     fabric: 'Silk Blend', images: [sareeImages[2], sareeImages[3]],
-    category: 'dresses', sizes: ['S', 'M', 'L', 'XL'], stock: 15, sku: 'IND-001',
+    category: 'dresses', hasSizes: true, sizes: ['S', 'M', 'L', 'XL'], stock: 15, sku: 'IND-001',
     tags: ['modern', 'fusion', 'party'], featured: false, isNew: true, isSale: false, isPremium: false, isTrending: false, rating: 4.2, reviews: 45,
   },
   {
     id: '10', name: 'A-Line Kurti', slug: 'a-line-kurti',
     price: 1899, comparePrice: 2899, description: 'Comfortable A-line kurti with elegant design and perfect fit.',
     fabric: 'Pure Cotton', images: [sareeImages[4], sareeImages[5]],
-    category: 'dresses', sizes: ['S', 'M', 'L', 'XL', 'XXL'], stock: 30, sku: 'KRT-001',
+    category: 'dresses', hasSizes: true, sizes: ['S', 'M', 'L', 'XL', 'XXL'], stock: 30, sku: 'KRT-001',
     tags: ['casual', 'comfortable', 'everyday'], featured: true, isNew: false, isSale: true, isPremium: false, isTrending: true, rating: 4.4, reviews: 123,
   },
   {
@@ -179,6 +202,22 @@ export const initialProducts: Product[] = [
     fabric: 'Pure Tussar Silk', images: [sareeImages[3], sareeImages[6]],
     category: 'silk', colors: ['Natural', 'Rust', 'Mustard'], stock: 5, sku: 'TSR-001',
     tags: ['handpainted', 'art', 'premium'], featured: true, isNew: false, isSale: false, isPremium: true, isTrending: false, rating: 4.8, reviews: 56,
+  },
+  {
+    id: '11', name: 'Royal Bridal Collection', slug: 'royal-bridal-collection',
+    price: 15999, comparePrice: 24999, description: 'Exclusive bridal collection with heavy embroidery and premium fabric. Limited edition prebooking.',
+    fabric: 'Premium Silk with Heavy Zari', images: [sareeImages[0], sareeImages[1]],
+    category: 'silk', colors: ['Red', 'Maroon', 'Gold'], stock: 0, sku: 'RBC-001',
+    tags: ['bridal', 'exclusive', 'limited'], featured: true, isNew: true, isSale: false, isPremium: true, isTrending: true, rating: 5.0, reviews: 12,
+    isPrebooking: true, prebookingPrice: 15999, prebookingDeliveryDays: 15, prebookingMessage: 'Exclusive bridal collection - Delivered in 10-15 days'
+  },
+  {
+    id: '12', name: 'Designer Fusion Saree', slug: 'designer-fusion-saree',
+    price: 8999, comparePrice: 13999, description: 'Modern fusion design combining traditional craftsmanship with contemporary style.',
+    fabric: 'Art Silk with Digital Print', images: [sareeImages[2], sareeImages[3]],
+    category: 'designer', colors: ['Black', 'Silver', 'Blue'], stock: 0, sku: 'DFS-001',
+    tags: ['designer', 'modern', 'fusion'], featured: true, isNew: true, isSale: false, isPremium: true, isTrending: true, rating: 4.9, reviews: 8,
+    isPrebooking: true, prebookingPrice: 8999, prebookingDeliveryDays: 12, prebookingMessage: 'Designer exclusive - Delivered in 10-12 days'
   },
 ];
 

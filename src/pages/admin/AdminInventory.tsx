@@ -241,7 +241,7 @@ const AdminInventory = () => {
           </thead>
           <tbody>
             {inventory.map((item, i) => (
-              <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={`inventory-${item.productId}-${item.variant}-${i}`} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="p-4 font-medium">{item.productName}</td>
                 <td className="p-4">{item.variant}</td>
                 <td className="p-4 text-muted-foreground">{item.sku}</td>

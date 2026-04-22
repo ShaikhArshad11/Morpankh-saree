@@ -34,8 +34,8 @@ interface OrderDoc {
   updatedAt: Date;
 }
 
-let client: MongoClient;
-let db: Db;
+let client: MongoClient | null = null;
+let db: Db | null = null;
 
 function isAdminRequest(request: NextRequest) {
   const auth = (request.headers.get('authorization') || '').trim();
@@ -45,13 +45,41 @@ function isAdminRequest(request: NextRequest) {
 }
 
 async function getDatabase() {
-  if (!client) {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-    client = new MongoClient(uri);
-    await client.connect();
-    db = client.db('morpankh_saree');
+  try {
+    if (!client) {
+      const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+      console.log('Connecting to MongoDB:', uri.replace(/\/\/.*@/, '//***:***@'));
+      client = new MongoClient(uri, {
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 30000,
+      });
+      await client.connect();
+      db = client.db('morpankh_saree');
+      console.log('Successfully connected to MongoDB');
+    }
+    
+    // Verify database connection is still alive
+    if (db) {
+      await db.admin().ping();
+    }
+    return db!;
+  } catch (error) {
+    console.error('Database connection error:', error);
+    
+    // Reset connection on error
+    if (client) {
+      try {
+        await client.close();
+      } catch (closeError) {
+        console.error('Error closing client:', closeError);
+      }
+      client = null;
+      db = null;
+    }
+    
+    throw new Error(`Failed to connect to database: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  return db;
 }
 
 async function sendStatusUpdateEmail(order: OrderDoc): Promise<boolean> {
@@ -205,7 +233,10 @@ async function sendStatusUpdateEmail(order: OrderDoc): Promise<boolean> {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('📊 Admin orders API called');
+    
     if (!isAdminRequest(request)) {
+      console.log('❌ Unauthorized request');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -214,10 +245,19 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const skip = (page - 1) * pageSize;
 
+    console.log(`📄 Fetching orders: page=${page}, pageSize=${pageSize}`);
+
     const database = await getDatabase();
+    
+    if (!database) {
+      throw new Error('Database connection failed');
+    }
+
+    console.log('✅ Database connected, fetching orders collection');
     
     // Get total count for pagination
     const total = await database.collection('orders').countDocuments({});
+    console.log(`📈 Total orders found: ${total}`);
     
     // Get paginated orders
     const orders = await database
@@ -228,6 +268,8 @@ export async function GET(request: NextRequest) {
       .limit(pageSize)
       .toArray();
 
+    console.log(`📦 Retrieved ${orders.length} orders`);
+
     const transformed = (orders as WithId<Document>[]).map((o) => ({
       ...o,
       _id: o._id.toString(),
@@ -235,6 +277,8 @@ export async function GET(request: NextRequest) {
     }));
 
     const totalPages = Math.ceil(total / pageSize);
+
+    console.log(`✅ Successfully fetched orders: page ${page} of ${totalPages}`);
 
     return NextResponse.json({ 
       success: true, 
@@ -250,8 +294,23 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error fetching admin orders:', msg);
-    return NextResponse.json({ success: false, error: 'Failed to fetch orders' }, { status: 500 });
+    console.error('❌ Error fetching admin orders:', msg);
+    console.error('❌ Full error:', error);
+    
+    // Check if it's a connection error
+    if (msg.includes('ENOTFOUND') || msg.includes('ETIMEDOUT') || msg.includes('ECONNREFUSED')) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Database connection failed. Please check your MongoDB connection.',
+        details: msg
+      }, { status: 503 });
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to fetch orders',
+      details: msg 
+    }, { status: 500 });
   }
 }
 
@@ -269,7 +328,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const database = await getDatabase();
-    const orders = database.collection('orders');
+    const orders = database!.collection('orders');
 
     const result = await orders.updateOne(
       { _id: new ObjectId(id) },
@@ -308,7 +367,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const database = await getDatabase();
-    const orders = database.collection('orders');
+    const orders = database!.collection('orders');
 
     const result = await orders.deleteOne({ _id: new ObjectId(id) });
 

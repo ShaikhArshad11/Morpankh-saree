@@ -157,12 +157,25 @@ export async function POST(request: NextRequest) {
       fabric: body?.fabric || '',
       fabricType: body?.fabricType ?? body?.fabric ?? '',
       shortDescription: body?.shortDescription,
+      size: body?.size || '',
+      hasSizes: Boolean(body?.hasSizes || false),
+      sizes: body?.hasSizes ? (Array.isArray(body?.sizes) ? body.sizes : []) : [],
 
       hidden: Boolean(body?.hidden),
       featured: Boolean(body?.featured),
       isNew: Boolean(body?.isNew),
       isPremium: Boolean(body?.isPremium),
       isTrending: Boolean(body?.isTrending),
+      isLimitedOffer: Boolean(body?.isLimitedOffer),
+      limitedStock: body?.isLimitedOffer ? Number(body?.limitedStock) || undefined : undefined,
+      limitedOfferMessage: body?.isLimitedOffer ? String(body?.limitedOfferMessage || '') : undefined,
+      cardOfferText: typeof body?.cardOfferText === 'string' ? body.cardOfferText.trim() : '',
+
+      // Prebooking fields
+      isPrebooking: Boolean(body?.isPrebooking),
+      prebookingPrice: body?.isPrebooking ? Number(body?.prebookingPrice) || undefined : undefined,
+      prebookingDeliveryDays: body?.isPrebooking ? Number(body?.prebookingDeliveryDays) || undefined : undefined,
+      prebookingMessage: body?.isPrebooking ? String(body?.prebookingMessage || '') : undefined,
 
       rating: Number(body?.rating) || 0,
       reviews: Number(body?.reviews) || 0,

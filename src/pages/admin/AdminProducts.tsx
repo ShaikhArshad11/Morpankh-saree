@@ -26,6 +26,8 @@ interface DbProduct {
   description: string;
   fabric: string;
   size?: string;
+  hasSizes?: boolean;
+  sizes?: string[];
   hidden?: boolean;
   images?: string[];
   sku?: string;
@@ -37,6 +39,15 @@ interface DbProduct {
   rating?: number;
   reviews?: number;
   sareeLength?: string;
+  cardOfferText?: string;
+  isLimitedOffer?: boolean;
+  limitedStock?: number;
+  limitedOfferMessage?: string;
+  // Prebooking fields
+  isPrebooking?: boolean;
+  prebookingPrice?: number;
+  prebookingDeliveryDays?: number;
+  prebookingMessage?: string;
 }
 
 interface DbCategory {
@@ -64,6 +75,8 @@ type ProductForm = {
   description: string;
   fabric: string;
   size: string;
+  hasSizes: boolean;
+  sizes: string[];
   hidden: boolean;
   tags: string[];
   featured: boolean;
@@ -73,6 +86,15 @@ type ProductForm = {
   rating: number;
   reviews: number;
   sareeLength: string;
+  cardOfferText: string;
+  isLimitedOffer: boolean;
+  limitedStock: string;
+  limitedOfferMessage: string;
+  // Prebooking fields
+  isPrebooking: boolean;
+  prebookingPrice: string;
+  prebookingDeliveryDays: string;
+  prebookingMessage: string;
 };
 
 const AdminProducts = () => {
@@ -97,10 +119,15 @@ const AdminProducts = () => {
     name: '', 
     sku: '', 
     originalPrice: '', salePrice: '', category: '', stock: '', colors: [],
-    description: '', fabric: '', size: '', hidden: false,
+    description: '', fabric: '', size: '', hasSizes: false, sizes: [], hidden: false,
     tags: [], featured: false, isNew: false, isPremium: false,
     isTrending: false, rating: 0, reviews: 0,
-    sareeLength: '',
+    sareeLength: '', cardOfferText: '', isLimitedOffer: false, limitedStock: '', limitedOfferMessage: '',
+    // Prebooking fields
+    isPrebooking: false,
+    prebookingPrice: '',
+    prebookingDeliveryDays: '',
+    prebookingMessage: '',
   });
 
   const totalStock = form.colors.reduce((sum, color) => sum + Number(color.stock || 0), 0);
@@ -164,10 +191,15 @@ const AdminProducts = () => {
       name: '', 
       sku: '', 
       originalPrice: '', salePrice: '', category: categories[0]?.slug || '', stock: '', colors: [],
-      description: '', fabric: '', size: '', hidden: false,
+      description: '', fabric: '', size: '', hasSizes: false, sizes: [], hidden: false,
       tags: [], featured: false, isNew: false, isPremium: false,
       isTrending: false, rating: 0, reviews: 0,
-      sareeLength: '',
+      sareeLength: '', cardOfferText: '', isLimitedOffer: false, limitedStock: '', limitedOfferMessage: '',
+      // Prebooking fields
+      isPrebooking: false,
+      prebookingPrice: '',
+      prebookingDeliveryDays: '',
+      prebookingMessage: '',
     });
   };
 
@@ -189,6 +221,8 @@ const AdminProducts = () => {
       description: p.description,
       fabric: p.fabric,
       size: p.size || '',
+      hasSizes: p.hasSizes || false,
+      sizes: p.sizes || [],
       hidden: p.hidden || false,
       tags: p.tags || [],
       featured: p.featured || false,
@@ -198,6 +232,15 @@ const AdminProducts = () => {
       rating: p.rating || 0,
       reviews: p.reviews || 0,
       sareeLength: p.sareeLength || '',
+      cardOfferText: p.cardOfferText || '',
+      isLimitedOffer: p.isLimitedOffer || false,
+      limitedStock: p.limitedStock?.toString() || '',
+      limitedOfferMessage: p.limitedOfferMessage || '',
+      // Prebooking fields
+      isPrebooking: p.isPrebooking || false,
+      prebookingPrice: p.prebookingPrice?.toString() || '',
+      prebookingDeliveryDays: p.prebookingDeliveryDays?.toString() || '',
+      prebookingMessage: p.prebookingMessage || '',
     });
     setModalOpen(true);
   };
@@ -275,6 +318,8 @@ const AdminProducts = () => {
       description: form.description, 
       fabric: form.fabric, 
       size: form.size,
+      hasSizes: form.hasSizes,
+      sizes: form.hasSizes ? form.sizes : [],
       hidden: form.hidden, 
       sku: form.sku,
       tags: form.tags,
@@ -285,6 +330,15 @@ const AdminProducts = () => {
       rating: form.rating,
       reviews: form.reviews,
       sareeLength: form.sareeLength,
+      cardOfferText: form.cardOfferText?.trim() ? form.cardOfferText.trim() : undefined,
+      isLimitedOffer: form.isLimitedOffer,
+      limitedStock: form.isLimitedOffer ? Number(form.limitedStock) : undefined,
+      limitedOfferMessage: form.isLimitedOffer ? form.limitedOfferMessage : undefined,
+      // Prebooking fields
+      isPrebooking: form.isPrebooking,
+      prebookingPrice: form.isPrebooking ? Number(form.prebookingPrice) : undefined,
+      prebookingDeliveryDays: form.isPrebooking ? Number(form.prebookingDeliveryDays) : undefined,
+      prebookingMessage: form.isPrebooking ? form.prebookingMessage?.trim() : undefined,
     };
     
     setSubmitting(true);
@@ -423,7 +477,7 @@ const AdminProducts = () => {
           <div className="p-4">
             <div className="space-y-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 border-b border-border last:border-0">
+                <div key={`admin-skeleton-${i}`} className="flex items-center gap-4 p-3 border-b border-border last:border-0">
                   <div className="w-10 h-12 bg-muted rounded animate-pulse" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
@@ -475,6 +529,7 @@ const AdminProducts = () => {
                     <div>
                       <span className="font-medium">{p.name}</span>
                       {p.hidden && <span className="ml-2 text-xs text-destructive">(Hidden)</span>}
+                      {p.isLimitedOffer && <span className="ml-2 text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800 font-medium">Limited</span>}
                     </div>
                   </td>
                   <td className="p-4">₹{p.price.toLocaleString()}</td>
@@ -599,7 +654,7 @@ const AdminProducts = () => {
                 <label className="block text-sm font-medium mb-2">Colors</label>
                 <div className="space-y-3">
                   {form.colors.map((color, index) => (
-                    <div key={index} className="border border-border rounded-lg p-3 space-y-2">
+                    <div key={`color-${index}-${color.colorName || 'new'}`} className="border border-border rounded-lg p-3 space-y-2">
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1">Color Name</label>
@@ -690,19 +745,40 @@ const AdminProducts = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Size (s, m, l, xl, xxl)</label>
-                  <select
-                    value={form.size}
-                    onChange={(e) => setForm({ ...form, size: e.target.value })}
-                    className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">Select Size</option>
-                    <option value="s">S</option>
-                    <option value="m">M</option>
-                    <option value="l">L</option>
-                    <option value="xl">XL</option>
-                    <option value="xxl">XXL</option>
-                  </select>
+                  <label className="flex items-center gap-2 text-sm font-medium mb-3">
+                    <input
+                      type="checkbox"
+                      checked={form.hasSizes}
+                      onChange={(e) => setForm({ ...form, hasSizes: e.target.checked, sizes: e.target.checked ? form.sizes : [] })}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    This product has sizes
+                  </label>
+                  
+                  {form.hasSizes && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Available Sizes</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                          <label key={size} className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={form.sizes.includes(size)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setForm({ ...form, sizes: [...form.sizes, size] });
+                                } else {
+                                  setForm({ ...form, sizes: form.sizes.filter(s => s !== size) });
+                                }
+                              }}
+                              className="rounded border-border text-primary focus:ring-primary"
+                            />
+                            {size}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="rounded-3xl border border-border bg-muted/70 p-3 text-sm text-muted-foreground">
                   Total product stock is calculated from color quantities: <span className="font-semibold text-foreground">{totalStock}</span>
@@ -734,12 +810,23 @@ const AdminProducts = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-1">Product Card Offer Text</label>
+                <input
+                  type="text"
+                  value={form.cardOfferText}
+                  onChange={(e) => setForm({ ...form, cardOfferText: e.target.value })}
+                  className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="e.g. BUY 1 GET 1"
+                  maxLength={40}
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium mb-1">Tags (comma separated)</label>
                 <input
                   type="text"
                   value={form.tags.join(', ')}
                   onChange={(e) => setForm({ ...form, tags: e.target.value.split(',').map(tag => tag.trim()) })}
-                  className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="Enter tags separated by commas"
                 />
               </div>
@@ -768,9 +855,6 @@ const AdminProducts = () => {
                     New Product
                   </label>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium">
                     <input
@@ -792,6 +876,118 @@ const AdminProducts = () => {
                     />
                     Trending Product
                   </label>
+                </div>
+              </div>
+
+              {/* Limited Offer Section */}
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        checked={form.isLimitedOffer}
+                        onChange={(e) => setForm({ ...form, isLimitedOffer: e.target.checked, limitedStock: e.target.checked ? form.limitedStock : '', limitedOfferMessage: e.target.checked ? form.limitedOfferMessage : '' })}
+                        className="rounded"
+                      />
+                      Limited Offer Product
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">Enable to show urgency messaging on the website</p>
+                  </div>
+                  
+                  {form.isLimitedOffer && (
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Limited Stock Quantity</label>
+                        <input
+                          type="number"
+                          value={form.limitedStock}
+                          onChange={(e) => setForm({ ...form, limitedStock: e.target.value })}
+                          className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          placeholder="e.g. 5"
+                          min="1"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Number of items left for this limited offer</p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Limited Offer Message</label>
+                        <input
+                          type="text"
+                          value={form.limitedOfferMessage}
+                          onChange={(e) => setForm({ ...form, limitedOfferMessage: e.target.value })}
+                          className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          placeholder="e.g. Hurry! Only few left in stock!"
+                          maxLength={100}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Custom urgency message (max 100 characters)</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Prebooking Section */}
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.isPrebooking}
+                        onChange={(e) => setForm({ ...form, isPrebooking: e.target.checked, prebookingPrice: e.target.checked ? form.prebookingPrice : '', prebookingDeliveryDays: e.target.checked ? form.prebookingDeliveryDays : '', prebookingMessage: e.target.checked ? form.prebookingMessage : '' })}
+                        className="rounded"
+                      />
+                      Enable Prebooking
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">Allow customers to prebook this product before it's available</p>
+                  </div>
+                  
+                  {form.isPrebooking && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Prebooking Price (₹)</label>
+                          <input
+                            type="number"
+                            value={form.prebookingPrice}
+                            onChange={(e) => setForm({ ...form, prebookingPrice: e.target.value })}
+                            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="9999"
+                            min="0"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Price for prebooking (can be same as regular price)</p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Delivery Days</label>
+                          <input
+                            type="number"
+                            value={form.prebookingDeliveryDays}
+                            onChange={(e) => setForm({ ...form, prebookingDeliveryDays: e.target.value })}
+                            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="10"
+                            min="1"
+                            max="30"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Expected delivery time in days</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Prebooking Message</label>
+                        <input
+                          type="text"
+                          value={form.prebookingMessage}
+                          onChange={(e) => setForm({ ...form, prebookingMessage: e.target.value })}
+                          className="w-full border border-border rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          placeholder="e.g. Exclusive prebooking - Limited availability!"
+                          maxLength={100}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Custom message for prebooking (max 100 characters)</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -918,9 +1114,21 @@ const AdminProducts = () => {
                       <span className="font-medium">{detailsProduct.fabric || '—'}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Size:</span>{' '}
-                      <span className="font-medium">{detailsProduct.size || '—'}</span>
+                      <span className="text-muted-foreground">Has Sizes:</span>{' '}
+                      <span className="font-medium">{detailsProduct.hasSizes ? 'Yes' : 'No'}</span>
                     </div>
+                    {detailsProduct.hasSizes && detailsProduct.sizes && detailsProduct.sizes.length > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">Available Sizes:</span>{' '}
+                        <span className="font-medium">{detailsProduct.sizes.join(', ') || '—'}</span>
+                      </div>
+                    )}
+                    {!detailsProduct.hasSizes && detailsProduct.size && (
+                      <div>
+                        <span className="text-muted-foreground">Size:</span>{' '}
+                        <span className="font-medium">{detailsProduct.size || '—'}</span>
+                      </div>
+                    )}
                     <div>
                       <span className="text-muted-foreground">Saree Length:</span>{' '}
                       <span className="font-medium">{detailsProduct.sareeLength || '—'}</span>
@@ -937,11 +1145,51 @@ const AdminProducts = () => {
                           detailsProduct.isNew ? 'New' : null,
                           detailsProduct.isPremium ? 'Premium' : null,
                           detailsProduct.isTrending ? 'Trending' : null,
+                          detailsProduct.isLimitedOffer ? 'Limited Offer' : null,
+                          detailsProduct.isPrebooking ? 'Prebooking' : null,
                         ]
                           .filter(Boolean)
                           .join(', ') || '—'}
                       </span>
                     </div>
+                    {detailsProduct.isLimitedOffer && (
+                      <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 mt-2">
+                        <div className="text-sm font-medium text-orange-800 mb-1">Limited Offer Details</div>
+                        <div className="grid grid-cols-1 gap-1 text-sm">
+                          <div>
+                            <span className="text-orange-600">Limited Stock:</span>{' '}
+                            <span className="font-medium text-orange-800">{detailsProduct.limitedStock || '—'} items left</span>
+                          </div>
+                          {detailsProduct.limitedOfferMessage && (
+                            <div>
+                              <span className="text-orange-600">Message:</span>{' '}
+                              <span className="font-medium text-orange-800">{detailsProduct.limitedOfferMessage}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {detailsProduct.isPrebooking && (
+                      <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 mt-2">
+                        <div className="text-sm font-medium text-purple-800 mb-1">Prebooking Details</div>
+                        <div className="grid grid-cols-1 gap-1 text-sm">
+                          <div>
+                            <span className="text-purple-600">Prebooking Price:</span>{' '}
+                            <span className="font-medium text-purple-800">₹{Number(detailsProduct.prebookingPrice || 0).toLocaleString()}</span>
+                          </div>
+                          <div>
+                            <span className="text-purple-600">Delivery Days:</span>{' '}
+                            <span className="font-medium text-purple-800">{detailsProduct.prebookingDeliveryDays || '—'} days</span>
+                          </div>
+                          {detailsProduct.prebookingMessage && (
+                            <div>
+                              <span className="text-purple-600">Message:</span>{' '}
+                              <span className="font-medium text-purple-800">{detailsProduct.prebookingMessage}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <span className="text-muted-foreground">Rating:</span>{' '}
                       <span className="font-medium">{typeof detailsProduct.rating === 'number' ? detailsProduct.rating : '—'}</span>

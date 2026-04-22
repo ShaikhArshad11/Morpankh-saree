@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { Product } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
+import PrebookingBadge from '@/components/PrebookingBadge';
 
 interface ProductCardProps {
   product: Product;
@@ -59,12 +60,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
       productId: product.id,
       name: product.name,
       image: product.images[0],
-      price: product.price,
+      price: product.isPrebooking ? (product.prebookingPrice || product.price) : product.price,
       comparePrice: product.comparePrice,
       color: product.colors?.[0] || '',
       quantity: 1,
+      isPrebooking: product.isPrebooking,
+      prebookingPrice: product.prebookingPrice,
+      prebookingDeliveryDays: product.prebookingDeliveryDays,
     });
-    toast({ title: 'Added to cart', description: product.name });
+    toast({ 
+      title: product.isPrebooking ? 'Prebooked successfully' : 'Added to cart', 
+      description: product.name 
+    });
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -96,19 +103,34 @@ const ProductCard = ({ product }: ProductCardProps) => {
               className={`object-cover transition-transform duration-500 group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
             />
           )}
-          {/* Sale badge */}
-          {discount > 0 && product.isSale && (
-            <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-md">
-              {discount}% OFF
-            </span>
-          )}
-          {!product.isSale && discount > 0 && (
-            <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-md">
-              -{discount}%
-            </span>
-          )}
+          <div className="absolute top-3 left-3 right-3 z-20 flex items-start justify-between gap-2">
+            {/* Prebooking badge */}
+            {product.isPrebooking && (
+              <PrebookingBadge 
+                deliveryDays={product.prebookingDeliveryDays || 12} 
+                className="max-w-[48%]"
+              />
+            )}
+            
+            {/* Sale/Discount badge */}
+            {!product.isPrebooking && discount > 0 ? (
+              <span className="bg-destructive text-destructive-foreground text-[10px] sm:text-xs font-bold px-2 py-1 rounded-md max-w-[48%] truncate">
+                {product.isSale ? `${discount}% OFF` : `-${discount}%`}
+              </span>
+            ) : (
+              !product.isPrebooking && <span />
+            )}
+
+            {/* Limited Offer badge - positioned above sale badge */}
+            {!product.isPrebooking && product.isLimitedOffer && (
+              <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-md animate-pulse max-w-[48%] truncate">
+                <span className="sm:hidden">LIMITED</span>
+                <span className="hidden sm:inline">LIMITED OFFER</span>
+              </span>
+            )}
+          </div>
           {product.isNew && (
-            <span className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
+            <span className="absolute bottom-3 right-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">
               NEW
             </span>
           )}
@@ -125,11 +147,47 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="p-4">
           <h3 className="font-medium text-foreground text-sm truncate">{product.name}</h3>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-primary font-bold">₹{product.price.toLocaleString()}</span>
+            <span className="text-primary font-bold">
+              Rs{product.isPrebooking ? (product.prebookingPrice || product.price) : product.price.toLocaleString()}
+            </span>
             {product.comparePrice > product.price && (
-              <span className="text-muted-foreground text-sm line-through">₹{product.comparePrice.toLocaleString()}</span>
+              <span className="text-muted-foreground text-sm line-through">Rs{product.comparePrice.toLocaleString()}</span>
             )}
           </div>
+          
+          {/* Prebooking message */}
+          {product.isPrebooking && (
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center gap-1 text-xs font-medium text-purple-600">
+                <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                {product.prebookingMessage || 'Prebook now - Limited availability!'}
+              </div>
+              <div className="text-xs text-purple-700">
+                Expected delivery: {product.prebookingDeliveryDays || 10}-{(product.prebookingDeliveryDays || 10) + 5} days
+              </div>
+            </div>
+          )}
+          
+          {product.cardOfferText && !product.isPrebooking && (
+            <div className="mt-2 flex justify-end">
+              <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
+                {product.cardOfferText}
+              </span>
+            </div>
+          )}
+          {!product.isPrebooking && product.isLimitedOffer && (
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center gap-1 text-xs font-medium text-orange-600">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                {product.limitedOfferMessage || 'Hurry! Limited stock available!'}
+              </div>
+              {product.limitedStock && (
+                <div className="text-xs text-orange-700 font-semibold">
+                  Only {product.limitedStock} left!
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Link>
